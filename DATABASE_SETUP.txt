@@ -1,0 +1,42 @@
+# CHMSU IP SYSTEM - DATABASE SETUP INSTRUCTIONS
+
+## Database Name: chmsu-IP-system
+
+## Setup Steps:
+
+1. Open phpMyAdmin or MySQL command line
+
+2. Create the database:
+   CREATE DATABASE `chmsu-IP-system` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+3. If you have an existing database named 'chmsu_system', you can rename it:
+   RENAME DATABASE `chmsu_system` TO `chmsu-IP-system`;
+   
+   OR export data from old database and import to new one:
+   - Export 'chmsu_system' using phpMyAdmin
+   - Create 'chmsu-IP-system' database
+   - Import the SQL file into 'chmsu-IP-system'
+
+4. Make sure to update your config/config.php file with:
+   define('DB_NAME', 'chmsu-IP-system');
+
+5. Run the database migration script if needed
+
+## Important Database Schema Updates:
+
+The following columns have been added to support new features:
+
+- ip_applications table:
+  - payment_receipt VARCHAR(255) - stores payment receipt filename
+  - award_amount DECIMAL(10,2) - stores award amount for approved IPs
+  - award_reason TEXT - reason for award
+  - award_date DATETIME - when award was given
+
+## Directory Structure:
+
+Make sure your main directory is renamed to 'chmsu-IP-system' to match the new naming convention.
+
+Old: /htdocs/chmsu_system/
+New: /htdocs/chmsu-IP-system/
+
+This ensures consistency across database name, directory name, and project branding.

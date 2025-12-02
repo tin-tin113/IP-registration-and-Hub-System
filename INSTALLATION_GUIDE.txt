@@ -1,0 +1,147 @@
+================================================================================
+CHMSU IP SYSTEM - COMPLETE INSTALLATION GUIDE
+================================================================================
+
+SYSTEM REQUIREMENTS:
+- PHP 7.4 or higher
+- MySQL 5.7 or higher / MariaDB 10.3+
+- Apache/Nginx web server
+- XAMPP/WAMP/LAMP (recommended for local development)
+
+================================================================================
+STEP 1: DATABASE SETUP
+================================================================================
+
+1. Open phpMyAdmin (http://localhost/phpmyadmin)
+2. Click "Import" in the top menu
+3. Choose file: database/complete_chmsu_ip_system.sql
+4. Click "Go" to import
+
+   OR use MySQL command line:
+   mysql -u root -p < database/complete_chmsu_ip_system.sql
+
+   This will:
+   - Create database: chmsu-IP-system
+   - Create all required tables
+   - Insert default user accounts
+
+================================================================================
+STEP 2: PROJECT SETUP
+================================================================================
+
+1. Copy the entire project folder to your web server directory:
+   - For XAMPP: C:/xampp/htdocs/chmsu-IP-system/
+   - For WAMP: C:/wamp64/www/chmsu-IP-system/
+   - For Linux: /var/www/html/chmsu-IP-system/
+
+2. Ensure the 'uploads' folder exists and is writable:
+   - Right-click uploads folder → Properties → Security
+   - Add write permissions for IIS_IUSRS / IUSR (Windows)
+   - Or run: chmod 755 uploads/ (Linux/Mac)
+
+================================================================================
+STEP 3: CONFIGURATION
+================================================================================
+
+1. Open config/config.php
+2. Verify database settings:
+   DB_HOST: 'localhost'
+   DB_USER: 'root'
+   DB_PASS: '' (leave empty for XAMPP default)
+   DB_NAME: 'chmsu-IP-system'
+
+3. Update BASE_URL if needed:
+   define('BASE_URL', 'http://localhost/chmsu-IP-system/');
+
+================================================================================
+STEP 4: ACCESS THE SYSTEM
+================================================================================
+
+Open your browser and navigate to:
+http://localhost/chmsu-IP-system/
+
+You will be redirected to the login page.
+
+================================================================================
+DEFAULT LOGIN CREDENTIALS
+================================================================================
+
+CLERK ACCOUNT:
+Email: clerk@chmsu.edu.ph
+Password: password
+Role: Can verify applications and payments
+
+DIRECTOR ACCOUNT:
+Email: director@chmsu.edu.ph
+Password: password
+Role: Can approve applications and manage awards
+
+STUDENT/USER ACCOUNT:
+Email: student@chmsu.edu.ph
+Password: password
+Role: Can submit IP applications
+
+================================================================================
+COMPLETE WORKFLOW
+================================================================================
+
+1. USER submits IP application with documents (up to 20MB total)
+2. CLERK reviews and approves for office visit
+3. USER receives notification to pay at CHMSU Cashier Office
+4. USER uploads payment receipt
+5. CLERK verifies payment receipt
+6. DIRECTOR evaluates documents and makes final decision (approve/reject)
+7. If approved, certificate is generated automatically
+8. USER can view and download certificate
+
+================================================================================
+SYSTEM FEATURES
+================================================================================
+
+✓ Multiple file uploads (20MB limit)
+✓ Document viewing and download
+✓ Payment workflow with receipt verification
+✓ Director approval system
+✓ Certificate generation with QR codes
+✓ Badge and award system
+✓ Analytics dashboard
+✓ Audit trail logging
+✓ IP Hub for browsing approved works
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: "Cannot connect to database"
+Solution: Check MySQL is running, verify credentials in config/config.php
+
+Problem: "Cannot upload files"
+Solution: Check uploads/ folder permissions (755 or 777)
+
+Problem: "Page not found"
+Solution: Verify .htaccess exists and mod_rewrite is enabled
+
+Problem: "Cannot login"
+Solution: Run database/complete_chmsu_ip_system.sql again to reset accounts
+
+================================================================================
+SECURITY NOTES
+================================================================================
+
+⚠ IMPORTANT: Change default passwords immediately in production!
+⚠ Use strong passwords for admin accounts
+⚠ Keep PHP and MySQL updated
+⚠ Backup database regularly
+
+================================================================================
+SUPPORT
+================================================================================
+
+For technical support, contact:
+Email: ipoffice@chmsu.edu.ph
+Location: Administration Building, 2nd Floor
+Hours: Monday-Friday, 8:00 AM - 5:00 PM
+
+================================================================================
+END OF INSTALLATION GUIDE
+================================================================================
