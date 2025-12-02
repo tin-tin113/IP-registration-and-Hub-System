@@ -100,5 +100,6 @@ Copyright © 2025 Carlos Hilado Memorial State University. All rights reserved.
 
 For technical support:
 - Email: ipoffice@chmsu.edu.ph
-- Location: Administration Building, 2nd Floor
+- Location: Reaserch Innovation and Extension House - Intellectual Property Management Office 1st floor
+- 
 - Hours: Monday-Friday, 8:00 AM - 5:00 PM
