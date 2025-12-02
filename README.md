@@ -32,13 +32,11 @@ Quick start:
 3. Configure `config/config.php` with your database credentials
 4. Access via `http://localhost/chmsu-IP-system/`
 
-## Default Accounts
+## Testing Accounts
 
 - **Clerk**: clerk@chmsu.edu.ph / password
 - **Director**: director@chmsu.edu.ph / password  
 - **Student**: student@chmsu.edu.ph / password
-
-**⚠️ Change these passwords immediately in production!**
 
 ## Workflow
 
