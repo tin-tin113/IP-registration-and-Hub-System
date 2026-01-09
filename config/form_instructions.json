@@ -1,0 +1,20 @@
+{
+    "what_to_include": {
+        "title": "What to Include:",
+        "items": [
+            "Clear, descriptive title of your IP work",
+            "Detailed description (minimum 20 characters)",
+            "Select appropriate IP type (Copyright, Patent, or Trademark)",
+            "Supporting documentation (PDF or image)"
+        ]
+    },
+    "document_requirements": {
+        "title": "Document Requirements:",
+        "items": [
+            "<strong>Accepted formats:</strong> PDF, JPG, PNG",
+            "<strong>Maximum total size:</strong> 50MB for all files",
+            "<strong>Multiple files:</strong> You can upload multiple documents",
+            "<strong>Language:</strong> English or Filipino"
+        ]
+    }
+}

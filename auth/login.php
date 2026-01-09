@@ -6,6 +6,9 @@ require_once '../config/session.php';
 $error = '';
 $message = '';
 
+// Reset any in-progress forgot-password state when returning here
+unset($_SESSION['reset_email'], $_SESSION['reset_user_id'], $_SESSION['security_question'], $_SESSION['step3_verified']);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $email = trim($_POST['email'] ?? '');
   $password = trim($_POST['password'] ?? '');
@@ -37,7 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           ];
           
           auditLog('Login', 'User', $user['id']);
-          header("Location: " . BASE_URL . "dashboard.php");
+          
+          // Role-based redirect
+          if (in_array($user['role'], ['clerk', 'director'])) {
+            header("Location: " . BASE_URL . "admin/dashboard.php");
+          } else {
+            header("Location: " . BASE_URL . "dashboard.php");
+          }
           exit;
         } else {
           $error = 'Invalid email or password';
@@ -82,41 +91,43 @@ if (isset($_GET['message'])) {
       justify-content: center;
       padding: 20px;
       position: relative;
-      overflow-y: auto; /* Allow scrolling for smaller screens */
+      overflow-y: auto;
+      margin: 0;
     }
     
     body::before {
       content: '';
       position: absolute;
-      width: 500px;
-      height: 500px;
+      width: 300px;
+      height: 300px;
       background: radial-gradient(circle, rgba(218, 165, 32, 0.15) 0%, transparent 70%);
-      top: -250px;
-      right: -250px;
+      top: -150px;
+      right: -150px;
       border-radius: 50%;
     }
     
     body::after {
       content: '';
       position: absolute;
-      width: 400px;
-      height: 400px;
+      width: 250px;
+      height: 250px;
       background: radial-gradient(circle, rgba(218, 165, 32, 0.1) 0%, transparent 70%);
-      bottom: -200px;
-      left: -200px;
+      bottom: -125px;
+      left: -125px;
       border-radius: 50%;
     }
     
     .login-container {
       background: white;
-      border-radius: 24px;
+      border-radius: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
       width: 100%;
-      max-width: 480px;
-      padding: 48px;
+      max-width: 420px;
+      padding: 35px;
       position: relative;
       z-index: 1;
       backdrop-filter: blur(10px);
+      margin: auto;
     }
     
     .login-header {
@@ -179,7 +190,8 @@ if (isset($_GET['message'])) {
     }
     
     input[type="email"],
-    input[type="password"] {
+    input[type="password"],
+    input[type="text"] {
       width: 100%;
       padding: 14px 16px;
       border: 2px solid #E2E8F0;
@@ -191,11 +203,19 @@ if (isset($_GET['message'])) {
     }
     
     input[type="email"]:focus,
-    input[type="password"]:focus {
+    input[type="password"]:focus,
+    input[type="text"]:focus {
       outline: none;
       border-color: #1B7F4D;
       background: white;
       box-shadow: 0 0 0 4px rgba(27, 127, 77, 0.1);
+    }
+    
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #1B7F4D;
     }
     
     .alert {
@@ -297,12 +317,30 @@ if (isset($_GET['message'])) {
     }
     
     @media (max-width: 500px) {
+      body {
+        /* Allow scroll but prevent horizontal bounce */
+        overflow-x: hidden;
+        padding: 20px 16px;
+      }
+      
+      /* Scale down decorative elements or hide them on mobile */
+      body::before, body::after {
+        opacity: 0.5;
+        transform: scale(0.7);
+      }
+
       .login-container {
-        padding: 32px 24px;
+        padding: 32px 20px;
+        width: 100%;
       }
       
       .login-header h1 {
-        font-size: 26px;
+        font-size: 24px;
+      }
+      
+      .logo {
+        width: 64px;
+        height: 64px;
       }
     }
   </style>
@@ -319,14 +357,14 @@ if (isset($_GET['message'])) {
       <p>Intellectual Property Registration & Hub</p>
     </div>
     
-    <?php if (!empty($error)): ?>
+    <?php 
+    // Show only the latest message (error takes priority over success message)
+    if (!empty($error)): ?>
       <div class="alert alert-danger">
         <i class="fas fa-exclamation-circle"></i>
         <?php echo htmlspecialchars($error); ?>
       </div>
-    <?php endif; ?>
-    
-    <?php if (!empty($message)): ?>
+    <?php elseif (!empty($message)): ?>
       <div class="alert alert-success">
         <i class="fas fa-check-circle"></i>
         <?php echo htmlspecialchars($message); ?>
@@ -342,6 +380,10 @@ if (isset($_GET['message'])) {
       <div class="form-group">
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required placeholder="Enter your password">
+        <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="showPassword" style="width: auto; margin: 0; cursor: pointer;">
+          <label for="showPassword" style="margin: 0; font-weight: normal; font-size: 14px; color: #64748B; cursor: pointer;">Show Password</label>
+        </div>
       </div>
       
       <button type="submit">Sign In</button>
@@ -353,5 +395,24 @@ if (isset($_GET['message'])) {
     </form>
     
   </div>
+  
+  <script>
+    // Toggle password visibility with checkbox
+    document.getElementById('showPassword').addEventListener('change', function() {
+      const passwordInput = document.getElementById('password');
+      
+      if (this.checked) {
+        passwordInput.type = 'text';
+      } else {
+        passwordInput.type = 'password';
+      }
+    });
+    
+    // Ensure password input is functional
+    document.getElementById('password').addEventListener('input', function() {
+      // Password input is working
+      this.setAttribute('value', this.value);
+    });
+  </script>
 </body>
 </html>

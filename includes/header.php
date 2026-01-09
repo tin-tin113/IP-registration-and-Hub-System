@@ -216,4 +216,3 @@ $header_type = $is_logged_in ? 'authenticated' : 'public';
       <?php endif; ?>
     </div>
   </div>
-

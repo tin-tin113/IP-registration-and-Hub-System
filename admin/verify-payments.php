@@ -22,7 +22,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       $stmt->bind_param("sdi", $payment_date, $payment_amount, $app_id);
       
       if ($stmt->execute()) {
-        auditLog('Verify Payment', 'Application', $app_id);
+        // Fetch application details for audit log
+        $app_query = $conn->query("SELECT a.title, u.full_name FROM ip_applications a JOIN users u ON a.user_id=u.id WHERE a.id='$app_id'");
+        $app_data = $app_query->fetch_assoc();
+        
+        $log_details = json_encode([
+          'Action' => 'Payment Verified',
+          'Application Title' => $app_data['title'],
+          'Applicant' => $app_data['full_name'],
+          'Amount' => $payment_amount
+        ]);
+
+        auditLog('Verify Payment', 'Application', $app_id, null, $log_details);
         $success = 'Payment verified successfully. Application ready for director approval.';
       }
       
@@ -32,13 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $rejection_reason = trim($_POST['rejection_reason'] ?? '');
     
     if ($app_id && !empty($rejection_reason)) {
-      // Check if payment_rejection_reason column exists, if not add it
       $check_column = $conn->query("SHOW COLUMNS FROM ip_applications LIKE 'payment_rejection_reason'");
       if ($check_column->num_rows === 0) {
         $conn->query("ALTER TABLE ip_applications ADD COLUMN payment_rejection_reason TEXT NULL AFTER payment_receipt");
       }
       
-      $stmt = $conn->prepare("UPDATE ip_applications SET status='payment_pending', payment_rejection_reason=? WHERE id=?");
+      $stmt = $conn->prepare("UPDATE ip_applications SET status='office_visit', payment_rejection_reason=?, payment_receipt=NULL WHERE id=?");
       $stmt->bind_param("si", $rejection_reason, $app_id);
       
       if ($stmt->execute()) {
@@ -53,11 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   }
 }
 
-// Get applications awaiting payment verification
 $result = $conn->query("SELECT a.*, u.full_name, u.email FROM ip_applications a JOIN users u ON a.user_id=u.id WHERE a.status='payment_pending' ORDER BY a.created_at ASC");
 $applications = $result->fetch_all(MYSQLI_ASSOC);
 
-// Check if payment_rejection_reason column exists
 $check_column = $conn->query("SHOW COLUMNS FROM ip_applications LIKE 'payment_rejection_reason'");
 if ($check_column->num_rows === 0) {
   $conn->query("ALTER TABLE ip_applications ADD COLUMN payment_rejection_reason TEXT NULL AFTER payment_receipt");
@@ -78,98 +86,129 @@ if ($check_column->num_rows === 0) {
     }
     
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
       background: #f5f7fa;
       min-height: 100vh;
-      padding: 20px;
     }
     
+    /* Restored original spacing with margin-left instead of flush layout */
     .container {
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-    
-    .back-btn {
-      background: #f0f0f0;
-      color: #333;
-      padding: 10px 15px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      margin-bottom: 20px;
-      font-size: 13px;
+      margin-left: 30px;
+      padding: 30px;
+      max-width: 1400px;
     }
     
     .header {
-      background: white;
-      padding: 20px;
+      background: linear-gradient(135deg, #0A4D2E 0%, #1B5C3B 100%);
+      color: white;
+      padding: 30px;
       border-radius: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(10, 77, 46, 0.2);
+    }
+    
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    
+    .header p {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
     }
     
     .alert {
-      padding: 15px;
-      border-radius: 5px;
+      padding: 15px 20px;
+      border-radius: 6px;
       margin-bottom: 20px;
+      border-left: 4px solid;
     }
     
     .alert-success {
       background: #d4edda;
       color: #155724;
-      border: 1px solid #c3e6cb;
+      border-left-color: #28a745;
     }
     
     .alert-danger {
       background: #f8d7da;
       color: #721c24;
-      border: 1px solid #f5c6cb;
+      border-left-color: #f44336;
     }
     
     .app-card {
       background: white;
       border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border-top: 4px solid #0A4D2E;
+      transition: all 0.3s ease;
+    }
+    
+    .app-card:hover {
+      box-shadow: 0 4px 15px rgba(0,0,0,0.12);
     }
     
     .app-info {
-      margin-bottom: 15px;
+      margin-bottom: 20px;
       padding-bottom: 15px;
       border-bottom: 1px solid #f0f0f0;
     }
     
     .app-info h3 {
-      color: #333;
-      margin-bottom: 5px;
+      color: #0A4D2E;
+      margin-bottom: 12px;
+      font-size: 18px;
     }
     
     .app-meta {
       font-size: 13px;
       color: #666;
       display: flex;
-      gap: 15px;
+      gap: 20px;
       flex-wrap: wrap;
     }
     
-    /* Added receipt preview */
+    .app-meta span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .app-meta i {
+      color: #DAA520;
+      width: 16px;
+    }
+    
     .receipt-preview {
       background: #f9f9f9;
       padding: 15px;
-      border-radius: 5px;
+      border-radius: 8px;
       margin-bottom: 15px;
-      border: 1px solid #ddd;
+      border-left: 3px solid #DAA520;
+    }
+    
+    .receipt-preview strong {
+      color: #0A4D2E;
     }
     
     .receipt-preview img {
       max-width: 100%;
       max-height: 300px;
-      border-radius: 5px;
-      margin-top: 10px;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
+    
+    .receipt-preview a {
+      color: #0A4D2E;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .receipt-preview a:hover {
+      color: #DAA520;
     }
     
     .form-group {
@@ -178,21 +217,24 @@ if ($check_column->num_rows === 0) {
     
     label {
       display: block;
-      margin-bottom: 5px;
-      color: #333;
-      font-weight: 600;
+      margin-bottom: 8px;
+      color: #0A4D2E;
+      font-weight: 700;
       font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
     
     input[type="number"],
     input[type="text"],
     textarea {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       border: 1px solid #ddd;
-      border-radius: 5px;
+      border-radius: 6px;
       font-size: 13px;
       font-family: inherit;
+      transition: all 0.3s ease;
     }
     
     textarea {
@@ -200,51 +242,54 @@ if ($check_column->num_rows === 0) {
       min-height: 100px;
     }
     
-    input:focus {
+    input:focus,
+    textarea:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 5px rgba(102,126,234,0.3);
-    }
-    
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-    }
-    
-    button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 13px;
-      transition: all 0.2s;
-    }
-    
-    button:hover {
-      transform: translateY(-2px);
-    }
-    
-    .btn-reject {
-      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-      margin-top: 10px;
-    }
-    
-    .btn-reject:hover {
-      background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+      border-color: #0A4D2E;
+      box-shadow: 0 0 5px rgba(10, 77, 46, 0.3);
     }
     
     .button-group {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       flex-direction: column;
     }
     
+    button {
+      background: linear-gradient(135deg, #0A4D2E 0%, #1B5C3B 100%);
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s ease;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(10, 77, 46, 0.3);
+    }
+    
+    .btn-reject {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    .btn-reject:hover {
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-cancel {
+      background: #6c757d;
+    }
+    
+    .btn-cancel:hover {
+      box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    }
+    
     .rejection-form {
-      margin-top: 15px;
+      margin-top: 20px;
       padding-top: 15px;
       border-top: 1px solid #f0f0f0;
       display: none;
@@ -256,24 +301,53 @@ if ($check_column->num_rows === 0) {
     
     .empty {
       text-align: center;
-      padding: 50px 20px;
+      padding: 60px 20px;
       color: #999;
     }
     
     .empty i {
-      font-size: 48px;
-      margin-bottom: 15px;
+      font-size: 64px;
+      margin-bottom: 20px;
       color: #ddd;
+    }
+    
+    .empty p {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    
+    @media (max-width: 1024px) {
+      .container {
+        margin-left: 240px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        margin-left: 0;
+        padding: 20px;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .container {
+        padding: 15px;
+      }
+      
+      .app-meta {
+        flex-direction: column;
+        gap: 8px;
+      }
     }
   </style>
 </head>
 <body>
+  <?php require_once '../includes/sidebar.php'; ?>
+  
   <div class="container">
-    <a href="dashboard.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
-    
     <div class="header">
       <h1><i class="fas fa-credit-card"></i> Verify Payment Receipts</h1>
-      <p style="color: #666; font-size: 13px; margin-top: 5px;">Review and verify payment receipts from applicants</p>
+      <p>Review and verify payment receipts from applicants</p>
     </div>
     
     <?php if (!empty($success)): ?>
@@ -288,6 +362,7 @@ if ($check_column->num_rows === 0) {
       <div class="app-card empty">
         <i class="fas fa-inbox"></i>
         <p>No pending payment verifications</p>
+        <small>All payments have been reviewed</small>
       </div>
     <?php else: ?>
       <?php foreach ($applications as $app): ?>
@@ -296,32 +371,44 @@ if ($check_column->num_rows === 0) {
             <h3><?php echo htmlspecialchars($app['title']); ?></h3>
             <div class="app-meta">
               <span><i class="fas fa-user"></i> <?php echo htmlspecialchars($app['full_name']); ?></span>
+              <span><i class="fas fa-users"></i> <strong>Inventors:</strong><br><?php echo nl2br(htmlspecialchars($app['inventor_name'] ?? '')); ?></span>
               <span><i class="fas fa-tag"></i> <?php echo $app['ip_type']; ?></span>
               <span><i class="fas fa-calendar"></i> <?php echo date('M d, Y', strtotime($app['created_at'])); ?></span>
+              <span><i class="fas fa-money-bill-wave"></i> Expected: <strong>₱<?php echo number_format(!empty($app['payment_amount']) ? $app['payment_amount'] : IP_REGISTRATION_FEE, 2); ?></strong></span>
             </div>
           </div>
           
-          <!-- Display payment receipt if available -->
           <?php if (!empty($app['payment_receipt'])): ?>
             <div class="receipt-preview">
               <strong><i class="fas fa-receipt"></i> Payment Receipt:</strong>
-              <div style="margin-top: 10px;">
+              <div style="margin-top: 12px;">
                 <?php 
                   $receipt_ext = strtolower(pathinfo($app['payment_receipt'], PATHINFO_EXTENSION));
                   $receipt_path = '../uploads/' . $app['payment_receipt'];
                 ?>
-                <?php if (in_array($receipt_ext, ['jpg', 'jpeg', 'png'])): ?>
-                  <img src="<?php echo $receipt_path; ?>" alt="Payment Receipt">
-                <?php else: ?>
-                  <a href="<?php echo $receipt_path; ?>" target="_blank" style="color: #1B5C3B; text-decoration: none; font-weight: 600;">
-                    <i class="fas fa-file-pdf"></i> View Receipt Document
+                <div style="margin-bottom: 10px;">
+                  <?php if (in_array($receipt_ext, ['jpg', 'jpeg', 'png'])): ?>
+                    <img src="<?php echo $receipt_path; ?>" alt="Payment Receipt" style="max-width: 100%; border-radius: 6px; border: 1px solid #ddd;">
+                  <?php else: ?>
+                    <div style="padding: 20px; background: white; border: 1px solid #ddd; border-radius: 6px; text-align: center;">
+                      <i class="fas fa-file-pdf" style="font-size: 32px; color: #dc3545;"></i>
+                      <p style="margin-top: 10px; color: #666; font-size: 13px;"><?php echo htmlspecialchars(basename($app['payment_receipt'])); ?></p>
+                    </div>
+                  <?php endif; ?>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                  <a href="<?php echo $receipt_path; ?>" target="_blank" class="btn-view" style="flex: 1; justify-content: center; background: #e9ecef; color: #495057; padding: 10px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-eye"></i> View Receipt
                   </a>
-                <?php endif; ?>
+                  <a href="<?php echo $receipt_path; ?>" download class="btn-download" style="flex: 1; justify-content: center; background: #0A4D2E; color: white; padding: 10px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-download"></i> Download
+                  </a>
+                </div>
               </div>
             </div>
           <?php endif; ?>
           
-          <!-- Show rejection reason if previously rejected -->
           <?php if (!empty($app['payment_rejection_reason'])): ?>
             <div class="alert alert-danger" style="margin-bottom: 15px;">
               <strong><i class="fas fa-exclamation-triangle"></i> Previous Rejection Reason:</strong><br>
@@ -334,7 +421,8 @@ if ($check_column->num_rows === 0) {
             
             <div class="form-group">
               <label for="payment_amount_<?php echo $app['id']; ?>">Payment Amount (₱) *</label>
-              <input type="number" id="payment_amount_<?php echo $app['id']; ?>" name="payment_amount" step="0.01" min="0" placeholder="e.g., 500.00" required>
+              <input type="number" id="payment_amount_<?php echo $app['id']; ?>" name="payment_amount" step="0.01" min="0" value="<?php echo !empty($app['payment_amount']) ? $app['payment_amount'] : IP_REGISTRATION_FEE; ?>" placeholder="e.g., 500.00" required>
+              <small style="color: #999; font-size: 12px; margin-top: 6px; display: block;">Default registration fee: ₱<?php echo number_format(IP_REGISTRATION_FEE, 2); ?></small>
             </div>
             
             <div class="button-group">
@@ -354,14 +442,14 @@ if ($check_column->num_rows === 0) {
               
               <div class="form-group">
                 <label for="rejection_reason_<?php echo $app['id']; ?>">Rejection Reason *</label>
-                <textarea id="rejection_reason_<?php echo $app['id']; ?>" name="rejection_reason" placeholder="Explain why this payment receipt is being rejected (e.g., unclear image, incorrect amount, missing information)..." required></textarea>
+                <textarea id="rejection_reason_<?php echo $app['id']; ?>" name="rejection_reason" placeholder="Explain why this payment receipt is being rejected..." required></textarea>
               </div>
               
               <div class="button-group">
                 <button type="submit" name="action" value="reject_payment" class="btn-reject">
                   <i class="fas fa-times"></i> Confirm Rejection
                 </button>
-                <button type="button" onclick="document.getElementById('rejectForm_<?php echo $app['id']; ?>').classList.remove('active')" style="background: #6c757d;">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('rejectForm_<?php echo $app['id']; ?>').classList.remove('active')">
                   <i class="fas fa-times"></i> Cancel
                 </button>
               </div>

@@ -503,7 +503,7 @@ $user_name = $_SESSION['full_name'];
           <p>Make sure you have all necessary documents ready before submitting.</p>
           <ul>
             <li><i class="fas fa-file-pdf"></i> <span>Supporting documentation (PDF, DOC, JPG, PNG)</span></li>
-            <li><i class="fas fa-database"></i> <span>Maximum 20MB total file size</span></li>
+            <li><i class="fas fa-database"></i> <span>Maximum 50MB total file size</span></li>
             <li><i class="fas fa-shield-alt"></i> <span>Proof of ownership or authorship</span></li>
             <li><i class="fas fa-list-check"></i> <span>Detailed description of your work</span></li>
           </ul>
@@ -534,7 +534,7 @@ $user_name = $_SESSION['full_name'];
             <div class="step-number">1</div>
             <div class="step-content">
               <h4>Submit Your Application</h4>
-              <p>Fill out the application form with your IP details, including title, type, description, and upload supporting documents (up to 20MB). Once submitted, your application enters the review queue.</p>
+              <p>Fill out the application form with your IP details, including title, type, description, and upload supporting documents (up to 50MB). Once submitted, your application enters the review queue.</p>
             </div>
           </div>
           
@@ -614,7 +614,7 @@ $user_name = $_SESSION['full_name'];
           <p>Upload your payment receipt through the system for verification:</p>
           <ul>
             <li><i class="fas fa-image"></i> <span>Supported formats: JPG, PNG, PDF</span></li>
-            <li><i class="fas fa-expand"></i> <span>Maximum file size: 20MB</span></li>
+            <li><i class="fas fa-expand"></i> <span>Maximum file size: 50MB</span></li>
             <li><i class="fas fa-eye"></i> <span>Ensure receipt is clear and readable</span></li>
             <li><i class="fas fa-info-circle"></i> <span>Include payment date and amount</span></li>
           </ul>
@@ -681,7 +681,7 @@ $user_name = $_SESSION['full_name'];
             <i class="fas fa-chevron-down"></i>
           </div>
           <div class="faq-answer">
-            <p>The system accepts PDF, DOC, DOCX, JPG, JPEG, and PNG files. You can upload multiple files as long as the total size doesn't exceed 20MB. Make sure your documents are clear and legible for review.</p>
+            <p>The system accepts PDF, DOC, DOCX, JPG, JPEG, and PNG files. You can upload multiple files as long as the total size doesn't exceed 50MB. Make sure your documents are clear and legible for review.</p>
           </div>
         </div>
         
@@ -731,7 +731,13 @@ $user_name = $_SESSION['full_name'];
             <i class="fas fa-chevron-down"></i>
           </div>
           <div class="faq-answer">
-            <p>Badges are earned automatically when your approved IP works gain views in the IP Hub. Bronze badge requires 10+ views, Silver 50+, Gold 100+, Platinum 250+, and Diamond 500+ views. Innovation points are awarded with each badge to recognize your contribution to the CHMSU IP community.</p>
+            <p>Badges are earned automatically when your approved IP works gain views in the IP Hub. Each application can earn different badges based on its IP type:</p>
+            <ul style="margin: 10px 0 10px 20px; line-height: 1.8;">
+              <li><strong>Copyright:</strong> Can earn Bronze (10+ views), Silver (50+), and Gold (100+) badges</li>
+              <li><strong>Patent:</strong> Can earn Bronze, Silver, Gold, and Platinum (250+ views) badges</li>
+              <li><strong>Trademark:</strong> Can earn all badges including Diamond (500+ views)</li>
+            </ul>
+            <p>Innovation points match badge thresholds automatically. When you earn all available badges, you'll receive an Achievement Certificate recognizing your excellence in IP contributions!</p>
           </div>
         </div>
       </div>
@@ -739,7 +745,30 @@ $user_name = $_SESSION['full_name'];
       <div class="contact-box">
         <h3>Still Have Questions?</h3>
         <p>Our support team is here to help you with any questions or concerns</p>
-        <a href="mailto:ip-support@chmsu.edu.ph" class="contact-btn">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+          <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+            <i class="fas fa-envelope" style="font-size: 24px; margin-bottom: 8px; color: #DAA520;"></i>
+            <div style="font-weight: 600; margin-bottom: 5px;">Email</div>
+            <a href="mailto:<?php echo IP_OFFICE_EMAIL; ?>" style="color: white; text-decoration: none; font-size: 13px;">
+              <?php echo IP_OFFICE_EMAIL; ?>
+            </a>
+          </div>
+          <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+            <i class="fas fa-phone" style="font-size: 24px; margin-bottom: 8px; color: #DAA520;"></i>
+            <div style="font-weight: 600; margin-bottom: 5px;">Phone</div>
+            <a href="tel:<?php echo IP_OFFICE_PHONE; ?>" style="color: white; text-decoration: none; font-size: 13px;">
+              <?php echo IP_OFFICE_PHONE; ?>
+            </a>
+          </div>
+          <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+            <i class="fab fa-facebook" style="font-size: 24px; margin-bottom: 8px; color: #DAA520;"></i>
+            <div style="font-weight: 600; margin-bottom: 5px;">Facebook</div>
+            <a href="<?php echo IP_OFFICE_FACEBOOK; ?>" target="_blank" style="color: white; text-decoration: none; font-size: 13px;">
+              Visit Our Page
+            </a>
+          </div>
+        </div>
+        <a href="mailto:<?php echo IP_OFFICE_EMAIL; ?>" class="contact-btn" style="margin-top: 20px;">
           <i class="fas fa-envelope"></i> Contact Support
         </a>
       </div>

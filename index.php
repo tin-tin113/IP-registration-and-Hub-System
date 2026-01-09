@@ -425,22 +425,126 @@ $recent_ips = $conn->query("SELECT title, ip_type, DATE_FORMAT(approved_at, '%b 
       font-size: 14px;
     }
     
-    @media (max-width: 768px) {
+    /* Responsive Design */
+    @media (max-width: 1024px) {
       .hero h1 {
-        font-size: 42px;
+        font-size: 56px;
       }
       
-      .section-title {
+      .stats-container {
+        gap: 20px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .navbar {
+        padding: 12px 16px;
+      }
+
+      .nav-container {
+        flex-direction: column;
+        gap: 16px;
+      }
+      
+      .logo-section {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .nav-buttons {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .hero {
+        padding: 60px 20px;
+      }
+
+      .hero h1 {
         font-size: 36px;
+        letter-spacing: -1px;
+      }
+      
+      .hero p {
+        font-size: 16px;
+        margin-bottom: 30px;
       }
       
       .hero-buttons {
         flex-direction: column;
+        gap: 12px;
       }
       
       .btn-primary, .btn-secondary {
         width: 100%;
         justify-content: center;
+        padding: 14px 24px;
+      }
+
+      .section-title {
+        font-size: 32px;
+      }
+
+      .stats {
+        padding: 40px 20px;
+      }
+
+      .stat-item {
+        padding: 16px;
+      }
+
+      .stat-number {
+        font-size: 36px;
+      }
+
+      .features {
+        padding: 60px 20px;
+      }
+
+      .section-header {
+        margin-bottom: 40px;
+      }
+
+      .cta {
+        padding: 60px 20px;
+      }
+
+      .cta h2 {
+        font-size: 32px;
+      }
+
+      .cta p {
+        font-size: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .logo-text {
+        font-size: 16px;
+      }
+
+      .logo-img {
+        width: 40px;
+        height: 40px;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        font-size: 13px;
+        flex: 1;
+        justify-content: center;
+      }
+
+      .hero h1 {
+        font-size: 32px;
+      }
+
+      .hero::before {
+        display: none; /* Remove large blob on small screens to prevent overflow/distraction */
+      }
+      
+      .cta::before {
+        display: none;
       }
     }
   </style>

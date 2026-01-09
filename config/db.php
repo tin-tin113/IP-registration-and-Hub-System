@@ -30,4 +30,3 @@ class Database {
 // Create connection instance
 $db = new Database();
 $conn = $db->getConnection();
-?>

@@ -15,8 +15,8 @@ if (!$app_id) {
   exit;
 }
 
-// Verify application belongs to user and is in office_visit status
-$stmt = $conn->prepare("SELECT * FROM ip_applications WHERE id = ? AND user_id = ? AND status = 'office_visit'");
+// Verify application belongs to user and is in office_visit status (or payment_pending with rejection)
+$stmt = $conn->prepare("SELECT * FROM ip_applications WHERE id = ? AND user_id = ? AND (status = 'office_visit' OR (status = 'payment_pending' AND payment_rejection_reason IS NOT NULL))");
 $stmt->bind_param("ii", $app_id, $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -29,6 +29,9 @@ if ($result->num_rows === 0) {
 $app = $result->fetch_assoc();
 $stmt->close();
 
+// Get payment amount (use stored amount or default)
+$payment_amount = !empty($app['payment_amount']) ? $app['payment_amount'] : IP_REGISTRATION_FEE;
+
 // Handle payment upload
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (isset($_FILES['payment_receipt']) && $_FILES['payment_receipt']['error'] === 0) {
@@ -40,17 +43,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($file['size'] > MAX_FILE_SIZE) {
       $error = 'File too large. Max: 20MB';
     } else {
-      if (!is_dir(UPLOAD_DIR)) {
-        mkdir(UPLOAD_DIR, 0755, true);
+      $target_dir = UPLOAD_DIR . 'receipts/';
+      if (!is_dir($target_dir)) {
+        mkdir($target_dir, 0755, true);
       }
       
       $filename = 'payment_' . time() . '_' . uniqid() . '.' . $ext;
-      $filepath = UPLOAD_DIR . $filename;
+      $filepath = $target_dir . $filename;
       
       if (move_uploaded_file($file['tmp_name'], $filepath)) {
-        // Update application with payment receipt
-        $stmt = $conn->prepare("UPDATE ip_applications SET payment_receipt=?, status='payment_pending' WHERE id=?");
-        $stmt->bind_param("si", $filename, $app_id);
+        // Update application with payment receipt and clear rejection reason
+        // Store relative path (e.g., 'receipts/filename.ext')
+        $receipt_db_path = 'receipts/' . $filename;
+        $stmt = $conn->prepare("UPDATE ip_applications SET payment_receipt=?, status='payment_pending', payment_rejection_reason=NULL WHERE id=?");
+        $stmt->bind_param("si", $receipt_db_path, $app_id);
         
         if ($stmt->execute()) {
           auditLog('Upload Payment Receipt', 'Application', $app_id);
@@ -203,10 +209,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       background-color: #f0f8ff;
     }
     
-    .file-upload input[type="file"] {
-      display: none;
-    }
-    
     .file-upload i {
       font-size: 48px;
       color: #1B5C3B;
@@ -214,11 +216,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       display: block;
     }
     
-    .file-name {
-      font-size: 13px;
-      color: #666;
+    .file-list {
       margin-top: 15px;
-      font-weight: 600;
+      text-align: left;
+    }
+    
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f0f4ff;
+      padding: 10px 15px;
+      border-radius: 5px;
+      margin-bottom: 8px;
+      border: 1px solid #ddd;
+    }
+    
+    .file-item-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      font-size: 14px;
+      color: #333;
+    }
+    
+    .file-item-size {
+      font-size: 12px;
+      color: #666;
+      margin-right: 10px;
+    }
+    
+    .file-item-remove {
+      background: #f44336;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: background 0.2s;
+    }
+    
+    .file-item-remove:hover {
+      background: #d32f2f;
     }
     
     button {
@@ -261,16 +302,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h3><i class="fas fa-info-circle"></i> Payment Instructions</h3>
         <ol>
           <li>Visit the <strong><?php echo CASHIER_LOCATION; ?></strong> during office hours (<?php echo IP_OFFICE_HOURS; ?>)</li>
-          <li>Pay the required registration fee (amount will be communicated by the clerk)</li>
+          <li>Pay the required registration fee: <strong style="color: #E07D32; font-size: 16px;">₱<?php echo number_format($payment_amount, 2); ?></strong></li>
           <li>Request an <strong>official receipt</strong> from the cashier</li>
           <li>Take a clear photo or scan of your receipt</li>
           <li>Upload the receipt below and wait for clerk verification</li>
           <li>Once verified by clerk, your documents will be forwarded to the director for final evaluation</li>
-        </ol>
-        <div style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 5px;">
-          <i class="fas fa-calendar-check"></i> <strong>Office Visit Date:</strong> <?php echo $app['office_visit_date'] ? date('F d, Y', strtotime($app['office_visit_date'])) : 'Not scheduled'; ?>
-        </div>
+        </ol>+
       </div>
+      
+      <?php if (!empty($app['payment_rejection_reason'])): ?>
+        <div class="alert alert-danger" style="background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+          <strong><i class="fas fa-exclamation-triangle"></i> Payment Receipt Rejected</strong>
+          <p style="margin: 10px 0 0 0; font-size: 14px;">
+            <strong>Reason:</strong><br>
+            <?php echo nl2br(htmlspecialchars($app['payment_rejection_reason'])); ?>
+          </p>
+          <p style="margin: 10px 0 0 0; font-size: 13px; color: #856404;">
+            <i class="fas fa-info-circle"></i> Please review the reason above, then upload a new payment receipt.
+          </p>
+        </div>
+      <?php endif; ?>
       
       <?php if (!empty($error)): ?>
         <div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> <?php echo htmlspecialchars($error); ?></div>
@@ -280,16 +331,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($success); ?></div>
       <?php endif; ?>
       
-      <form method="POST" enctype="multipart/form-data">
+      <form method="POST" enctype="multipart/form-data" id="paymentForm">
         <div class="form-group">
           <label for="payment_receipt">Payment Receipt *</label>
-          <div class="file-upload" onclick="document.getElementById('payment_receipt').click()">
+          <div class="file-upload" id="fileUploadArea" style="position: relative;">
             <i class="fas fa-cloud-upload-alt"></i>
-            <p style="font-size: 16px; color: #333; margin-bottom: 5px;">Click to upload receipt</p>
+            <p style="font-size: 16px; color: #333; margin-bottom: 5px;">Click to upload or drag & drop</p>
             <small style="color: #999;">PDF, JPG, PNG (Max 20MB)</small>
-            <input type="file" id="payment_receipt" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png" required>
-            <div class="file-name" id="fileName"></div>
+            <input type="file" id="payment_receipt" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png" required style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
           </div>
+          <div class="file-list" id="fileList" style="margin-top: 15px;"></div>
         </div>
         
         <button type="submit" id="submitBtn" disabled>
@@ -300,20 +351,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </div>
   
   <script>
+    const maxFileSize = 20 * 1024 * 1024; // 20MB
+    
     document.getElementById('payment_receipt').addEventListener('change', function(e) {
-      const fileName = e.target.files[0]?.name || '';
-      const fileNameDiv = document.getElementById('fileName');
+      const fileListDiv = document.getElementById('fileList');
       const submitBtn = document.getElementById('submitBtn');
       
-      if (fileName) {
-        fileNameDiv.textContent = '✓ Selected: ' + fileName;
-        fileNameDiv.style.color = '#1B5C3B';
+      if (this.files && this.files.length > 0) {
+        const file = this.files[0];
+        
+        if (file.size > maxFileSize) {
+          alert('File size exceeds 20MB limit. Please select a smaller file.');
+          this.value = '';
+          fileListDiv.innerHTML = '';
+          submitBtn.disabled = true;
+          return;
+        }
+        
+        const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+        fileListDiv.innerHTML = `
+          <div class="file-item">
+            <div class="file-item-name">
+              <i class="fas fa-file"></i>
+              ${file.name}
+            </div>
+            <span class="file-item-size">${sizeInMB} MB</span>
+            <button type="button" class="file-item-remove" onclick="removeFile()" style="background: #f44336; color: white; border: none; border-radius: 3px; padding: 5px 10px; cursor: pointer; font-size: 11px;">
+              <i class="fas fa-times"></i> Remove
+            </button>
+          </div>
+        `;
+        fileListDiv.style.display = 'block';
         submitBtn.disabled = false;
       } else {
-        fileNameDiv.textContent = '';
+        fileListDiv.innerHTML = '';
         submitBtn.disabled = true;
       }
     });
+    
+    function removeFile() {
+      document.getElementById('payment_receipt').value = '';
+      document.getElementById('fileList').innerHTML = '';
+      document.getElementById('submitBtn').disabled = true;
+    }
   </script>
 </body>
 </html>

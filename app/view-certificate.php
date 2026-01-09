@@ -343,7 +343,7 @@ if (isset($_GET['download'])) {
         
         <div class="certificate-body">
           This certificate is proudly presented to<br>
-          <strong><?php echo htmlspecialchars($creator['full_name']); ?></strong><br>
+          <strong><?php echo htmlspecialchars($app['inventor_name'] ?? $creator['full_name']); ?></strong><br>
           in recognition of the registration of an Intellectual Property Work
         </div>
         
@@ -387,7 +387,13 @@ if (isset($_GET['download'])) {
     
     <div class="controls">
       <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> Print Certificate</button>
-      <a href="../app/my-applications.php" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>
+      <?php
+        // Check if we came from profile page
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+        $from_profile = strpos($referer, 'profile/badges-certificates.php') !== false;
+        $back_url = $from_profile ? '../profile/badges-certificates.php' : '../dashboard.php';
+      ?>
+      <a href="<?php echo $back_url; ?>" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>
     </div>
   </div>
   

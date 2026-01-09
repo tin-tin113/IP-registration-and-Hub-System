@@ -17,7 +17,7 @@ $stmt = $conn->prepare("
   SELECT a.*, u.full_name, u.email, u.department, u.id as owner_id
   FROM ip_applications a 
   JOIN users u ON a.user_id = u.id 
-  WHERE a.id = ? AND a.status = 'approved'
+  WHERE a.id = ? AND a.status = 'approved' AND a.publish_permission = 'granted'
 ");
 $stmt->bind_param("i", $work_id);
 $stmt->execute();
@@ -59,8 +59,8 @@ if ($viewer_id) {
     $stmt->execute();
     $stmt->close();
     
-    // Award badges and points if threshold is met
-    checkAndAwardBadges($work['owner_id']);
+    // Award badges and points if threshold is met (per application)
+    checkAndAwardBadges($work_id);
     
     // Refresh view count for display
     $refresh_stmt = $conn->prepare("
@@ -89,8 +89,8 @@ if ($viewer_id) {
     $stmt->execute();
     $stmt->close();
     
-    // Award badges and points if threshold is met (even for anonymous views)
-    checkAndAwardBadges($work['owner_id']);
+    // Award badges and points if threshold is met (per application, even for anonymous views)
+    checkAndAwardBadges($work_id);
     
     // Refresh view count for display
     $refresh_stmt = $conn->prepare("
@@ -266,11 +266,15 @@ if (!empty($work['document_file'])) {
       gap: 10px;
     }
     
-    .description {
+    .abstract {
       font-size: 15px;
       color: #475569;
       line-height: 1.8;
       margin-bottom: 32px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      width: 100%;
+      white-space: pre-wrap;
     }
     
     /* Document viewing and download section */
@@ -435,6 +439,128 @@ if (!empty($work['document_file'])) {
       .document-actions {
         flex-direction: column;
       }
+      
+      .abstract {
+        font-size: 14px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        margin: 20px auto;
+        padding: 0 16px;
+      }
+      
+      .work-header {
+        padding: 32px 20px;
+        border-radius: 16px;
+      }
+      
+      .work-title {
+        font-size: 24px;
+      }
+      
+      .main-content {
+        padding: 20px;
+      }
+      
+      .abstract {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      
+      .work-meta {
+        gap: 12px;
+        font-size: 13px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .navbar {
+        padding: 12px 16px;
+      }
+      
+      .nav-container {
+        flex-direction: column;
+        gap: 12px;
+      }
+      
+      .container {
+        margin: 16px auto;
+        padding: 0 12px;
+      }
+      
+      .work-header {
+        padding: 24px 16px;
+      }
+      
+      .work-title {
+        font-size: 20px;
+      }
+      
+      .work-badge {
+        font-size: 11px;
+      }
+      
+      .main-content {
+        padding: 16px;
+      }
+      
+      .section-title {
+        font-size: 16px;
+      }
+      
+      .abstract {
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      
+      .document-card {
+        padding: 16px;
+      }
+      
+      .document-name {
+        font-size: 13px;
+      }
+      
+      .document-size {
+        font-size: 12px;
+      }
+      
+      .btn-view, .btn-download {
+        font-size: 12px;
+        padding: 8px 16px;
+      }
+      
+      .info-card {
+        padding: 16px;
+      }
+      
+      .info-label {
+        font-size: 11px;
+      }
+      
+      .info-value {
+        font-size: 13px;
+      }
+      
+      .author-card {
+        padding: 16px;
+      }
+      
+      .author-avatar {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+      }
+      
+      .author-info h4 {
+        font-size: 14px;
+      }
+      
+      .author-info p {
+        font-size: 12px;
+      }
     }
   </style>
 </head>
@@ -464,10 +590,10 @@ if (!empty($work['document_file'])) {
     <div class="content-grid">
       <div class="main-content">
         <h2 class="section-title">
-          <i class="fas fa-file-lines"></i> Description
+          <i class="fas fa-file-lines"></i> Abstract
         </h2>
-        <div class="description">
-          <?php echo nl2br(htmlspecialchars($work['description'])); ?>
+        <div class="abstract">
+          <?php echo nl2br(htmlspecialchars($work['abstract'])); ?>
         </div>
         
         <!-- Documents section with view and download options -->

@@ -21,11 +21,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       
       if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
+        if (empty($user['security_question'])) {
+          $error = 'Security question is not set for this account. Please contact the administrator to update your profile.';
+        } else {
         $_SESSION['reset_email'] = $email;
         $_SESSION['reset_user_id'] = $user['id'];
         $_SESSION['security_question'] = $user['security_question'];
         $step = 2;
         auditLog('Password Recovery Started', 'User', $user['id']);
+        }
       } else {
         $error = 'Email not found';
       }
@@ -36,6 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $security_answer = strtolower(trim($_POST['security_answer'] ?? ''));
     $email = $_SESSION['reset_email'] ?? '';
     
+    if (empty($email)) {
+      $error = 'Session expired. Please start over.';
+      $step = 1;
+      session_destroy();
+    } else {
     error_log("[v0] Step2 - Email: " . $email);
     error_log("[v0] Step2 - User provided answer: " . $security_answer);
     
@@ -53,7 +62,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       error_log("[v0] Step2 - User answer length: " . strlen($security_answer));
       error_log("[v0] Step2 - Match result: " . ($security_answer === $stored_answer ? 'MATCH' : 'NO MATCH'));
       
-      if ($security_answer === $stored_answer) {
+        if ($stored_answer === '') {
+          // Allow legacy accounts without a stored security answer to proceed
+          $_SESSION['step3_verified'] = true;
+          $message = 'Security question not set. You may reset your password now.';
+          $step = 3;
+        } elseif ($security_answer === $stored_answer) {
         $_SESSION['step3_verified'] = true;
         $step = 3;
       } else {
@@ -66,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     $stmt->close();
+    }
   } elseif (isset($_POST['step3'])) {
     if (!isset($_SESSION['step3_verified'])) {
       $error = 'Unauthorized access. Please start over.';

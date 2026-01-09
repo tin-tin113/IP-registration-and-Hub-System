@@ -41,139 +41,247 @@ $recent_approvals = $recent->fetch_all(MYSQLI_ASSOC);
     }
     
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
       background: #f5f7fa;
       min-height: 100vh;
-      padding: 20px;
     }
     
+    /* Removed margin-left spacing to attach flush to sidebar */
     .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .back-btn {
-      background: #f0f0f0;
-      color: #333;
-      padding: 10px 15px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      margin-bottom: 20px;
-      font-size: 13px;
+      margin-left: 0;
+      padding: 30px;
+      max-width: 1400px;
     }
     
     .header {
-      background: white;
-      padding: 20px;
+      background: linear-gradient(135deg, #0A4D2E 0%, #1B5C3B 100%);
+      color: white;
+      padding: 30px;
       border-radius: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(10, 77, 46, 0.2);
+    }
+    
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    
+    .header p {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
     }
     
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
     }
     
     .stat-card {
       background: white;
       border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      border-top: 4px solid #667eea;
+      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border-left: 5px solid #0A4D2E;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+    }
+    
+    .stat-card.approved {
+      border-left-color: #4caf50;
+    }
+    
+    .stat-card.pending {
+      border-left-color: #ff9800;
+    }
+    
+    .stat-card.rejected {
+      border-left-color: #f44336;
+    }
+    
+    .stat-card.secondary {
+      border-left-color: #2196f3;
+    }
+    
+    .stat-card.tertiary {
+      border-left-color: #9c27b0;
     }
     
     .stat-number {
-      font-size: 28px;
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 5px;
+      font-size: 32px;
+      font-weight: 700;
+      color: #0A4D2E;
+      margin-bottom: 8px;
     }
     
     .stat-label {
-      font-size: 12px;
+      font-size: 13px;
       color: #666;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
     .card {
       background: white;
       border-radius: 10px;
-      padding: 20px;
+      padding: 25px;
       margin-bottom: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     }
     
     .card-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 15px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #0A4D2E;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .card-title i {
+      color: #DAA520;
     }
     
     .type-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
     
     .type-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px;
+      padding: 15px;
       background: #f9f9f9;
-      border-radius: 5px;
+      border-radius: 8px;
+      border-left: 3px solid #DAA520;
+      transition: all 0.3s ease;
+    }
+    
+    .type-item:hover {
+      background: #f0f0f0;
+      transform: translateX(5px);
     }
     
     .type-name {
       font-weight: 600;
-      color: #333;
+      color: #0A4D2E;
+      font-size: 14px;
     }
     
     .type-count {
-      background: #667eea;
+      background: linear-gradient(135deg, #0A4D2E 0%, #1B5C3B 100%);
       color: white;
-      padding: 4px 10px;
+      padding: 6px 14px;
       border-radius: 20px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
+    }
+    
+    .info-section {
+      background: linear-gradient(135deg, #DAA520 0%, #c89d1a 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    
+    .info-section p {
+      margin: 8px 0;
+      font-size: 13px;
+    }
+    
+    .info-section strong {
+      display: inline-block;
+      margin-right: 8px;
     }
     
     .recent-table {
       width: 100%;
       border-collapse: collapse;
+      overflow: hidden;
     }
     
     .recent-table th {
       background: #f5f7fa;
-      padding: 12px;
+      padding: 15px;
       text-align: left;
       font-size: 12px;
-      font-weight: 600;
-      color: #666;
-      border-bottom: 1px solid #ddd;
+      font-weight: 700;
+      color: #0A4D2E;
+      border-bottom: 2px solid #DAA520;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
     .recent-table td {
-      padding: 12px;
+      padding: 15px;
       border-bottom: 1px solid #f0f0f0;
       font-size: 13px;
+    }
+    
+    .recent-table tr:hover {
+      background: #f9f9f9;
+    }
+    
+    .cert-id {
+      font-weight: 700;
+      color: #0A4D2E;
+    }
+    
+    .type-badge {
+      background: #f0f0f0;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #0A4D2E;
+    }
+    
+    @media (max-width: 1024px) {
+      .container {
+        margin-left: 0;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        margin-left: 0;
+        padding: 20px;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .container {
+        padding: 15px;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
+  <?php require_once '../includes/sidebar.php'; ?>
+  
   <div class="container">
-    <a href="dashboard.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
-    
     <div class="header">
       <h1><i class="fas fa-chart-bar"></i> System Analytics</h1>
-      <p style="color: #666; font-size: 13px; margin-top: 5px;">Overview of IP registrations and system activity</p>
+      <p>Overview of IP registrations and system activity</p>
     </div>
     
     <div class="stats-grid">
@@ -181,29 +289,29 @@ $recent_approvals = $recent->fetch_all(MYSQLI_ASSOC);
         <div class="stat-number"><?php echo $stats['total_applications']; ?></div>
         <div class="stat-label">Total Applications</div>
       </div>
-      <div class="stat-card" style="border-top-color: #4caf50;">
+      <div class="stat-card approved">
         <div class="stat-number"><?php echo $stats['approved']; ?></div>
         <div class="stat-label">Approved</div>
       </div>
-      <div class="stat-card" style="border-top-color: #ff9800;">
+      <div class="stat-card pending">
         <div class="stat-number"><?php echo $stats['pending']; ?></div>
         <div class="stat-label">Pending</div>
       </div>
-      <div class="stat-card" style="border-top-color: #f44336;">
+      <div class="stat-card rejected">
         <div class="stat-number"><?php echo $stats['rejected']; ?></div>
         <div class="stat-label">Rejected</div>
       </div>
-      <div class="stat-card" style="border-top-color: #2196f3;">
+      <div class="stat-card secondary">
         <div class="stat-number"><?php echo $stats['total_users']; ?></div>
         <div class="stat-label">Users</div>
       </div>
-      <div class="stat-card" style="border-top-color: #9c27b0;">
+      <div class="stat-card tertiary">
         <div class="stat-number"><?php echo $stats['total_views']; ?></div>
         <div class="stat-label">Hub Views</div>
       </div>
     </div>
     
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
       <div class="card">
         <h2 class="card-title"><i class="fas fa-layer-group"></i> IP Type Distribution</h2>
         <div class="type-list">
@@ -218,7 +326,7 @@ $recent_approvals = $recent->fetch_all(MYSQLI_ASSOC);
       
       <div class="card">
         <h2 class="card-title"><i class="fas fa-info-circle"></i> System Information</h2>
-        <div style="font-size: 13px; color: #666; line-height: 2;">
+        <div class="info-section">
           <p><strong>System:</strong> CHMSU IP Registration & Hub</p>
           <p><strong>Location:</strong> <?php echo IP_OFFICE_LOCATION; ?></p>
           <p><strong>Hours:</strong> <?php echo IP_OFFICE_HOURS; ?></p>
@@ -227,7 +335,7 @@ $recent_approvals = $recent->fetch_all(MYSQLI_ASSOC);
       </div>
     </div>
     
-    <div class="card" style="margin-top: 20px;">
+    <div class="card">
       <h2 class="card-title"><i class="fas fa-check-circle"></i> Recently Approved Works</h2>
       <table class="recent-table">
         <thead>
@@ -243,10 +351,10 @@ $recent_approvals = $recent->fetch_all(MYSQLI_ASSOC);
           <?php foreach ($recent_approvals as $work): ?>
             <tr>
               <td><?php echo htmlspecialchars($work['title']); ?></td>
-              <td><span style="background: #f0f0f0; padding: 4px 8px; border-radius: 3px; font-size: 11px;"><?php echo $work['ip_type']; ?></span></td>
+              <td><span class="type-badge"><?php echo $work['ip_type']; ?></span></td>
               <td><?php echo htmlspecialchars($work['full_name']); ?></td>
               <td><?php echo date('M d, Y', strtotime($work['approved_at'])); ?></td>
-              <td><strong><?php echo $work['certificate_id']; ?></strong></td>
+              <td><span class="cert-id"><?php echo $work['certificate_id']; ?></span></td>
             </tr>
           <?php endforeach; ?>
         </tbody>

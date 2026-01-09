@@ -19,20 +19,20 @@ if (!in_array($filter, $allowed_statuses)) {
 // For regular users, show only their own applications
 if (in_array($user_role, ['clerk', 'director'])) {
   if ($filter === 'all') {
-    $query = "SELECT a.*, u.full_name, u.email FROM ip_applications a LEFT JOIN users u ON a.user_id = u.id ORDER BY a.created_at DESC";
+    $query = "SELECT a.*, u.full_name, u.email, c.id as cert_id FROM ip_applications a LEFT JOIN users u ON a.user_id = u.id LEFT JOIN certificates c ON a.id = c.application_id ORDER BY a.created_at DESC";
     $stats_query = "SELECT status, COUNT(*) as count FROM ip_applications GROUP BY status";
   } else {
     $status_escaped = $conn->real_escape_string($filter);
-    $query = "SELECT a.*, u.full_name, u.email FROM ip_applications a LEFT JOIN users u ON a.user_id = u.id WHERE a.status = '$status_escaped' ORDER BY a.created_at DESC";
+    $query = "SELECT a.*, u.full_name, u.email, c.id as cert_id FROM ip_applications a LEFT JOIN users u ON a.user_id = u.id LEFT JOIN certificates c ON a.id = c.application_id WHERE a.status = '$status_escaped' ORDER BY a.created_at DESC";
     $stats_query = "SELECT status, COUNT(*) as count FROM ip_applications WHERE status = '$status_escaped' GROUP BY status";
   }
 } else {
   if ($filter === 'all') {
-    $query = "SELECT a.*, u.full_name, u.email FROM ip_applications a LEFT JOIN users u ON a.user_id = u.id WHERE a.user_id = $user_id ORDER BY a.created_at DESC";
+    $query = "SELECT a.*, u.full_name, u.email, c.id as cert_id FROM ip_applications a LEFT JOIN users u ON a.user_id = u.id LEFT JOIN certificates c ON a.id = c.application_id WHERE a.user_id = $user_id ORDER BY a.created_at DESC";
     $stats_query = "SELECT status, COUNT(*) as count FROM ip_applications WHERE user_id = $user_id GROUP BY status";
   } else {
     $status_escaped = $conn->real_escape_string($filter);
-    $query = "SELECT a.*, u.full_name, u.email FROM ip_applications a LEFT JOIN users u ON a.user_id = u.id WHERE a.user_id = $user_id AND a.status = '$status_escaped' ORDER BY a.created_at DESC";
+    $query = "SELECT a.*, u.full_name, u.email, c.id as cert_id FROM ip_applications a LEFT JOIN users u ON a.user_id = u.id LEFT JOIN certificates c ON a.id = c.application_id WHERE a.user_id = $user_id AND a.status = '$status_escaped' ORDER BY a.created_at DESC";
     $stats_query = "SELECT status, COUNT(*) as count FROM ip_applications WHERE user_id = $user_id AND status = '$status_escaped' GROUP BY status";
   }
 }
@@ -91,7 +91,7 @@ $upload_success = $_GET['success'] ?? '';
     }
     
     .btn-new {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #E07D32 0%, #155724 100%);
       color: white;
       padding: 12px 20px;
       border: none;
@@ -127,11 +127,11 @@ $upload_success = $_GET['success'] ?? '';
     }
     
     .stat-card:hover {
-      border-color: #667eea;
+      border-color: #155724;
     }
     
     .stat-card.active {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #155724 0%, #155724 100%);
       color: white;
     }
     
@@ -164,13 +164,13 @@ $upload_success = $_GET['success'] ?? '';
     }
     
     .filter-btn:hover {
-      border-color: #667eea;
+      border-color: #155724;
     }
     
     .filter-btn.active {
-      background: #667eea;
+      background: #155724;
       color: white;
-      border-color: #667eea;
+      border-color: #155724;
     }
     
     .applications {
@@ -292,8 +292,8 @@ $upload_success = $_GET['success'] ?? '';
     }
     
     .btn-small:hover {
-      border-color: #667eea;
-      color: #667eea;
+      border-color: #155724;
+      color: yellow;
     }
     
     .empty-state {
@@ -334,19 +334,67 @@ $upload_success = $_GET['success'] ?? '';
     .notification strong {
       font-size: 16px;
     }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 0;
+      }
+      
+      .header {
+        padding: 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .app-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      
+      .app-info {
+        width: 100%;
+      }
+      
+      .app-meta {
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      
+      .status-badge {
+        align-self: flex-start;
+        margin-bottom: 8px;
+      }
+      
+      .app-actions {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+      
+      .btn-small {
+        flex: 1;
+        justify-content: center;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <div style="display: flex; align-items: center; gap: 15px;">
-        <a href="../dashboard.php" class="btn-small" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 15px;">
+        <a href="../dashboard.php" class="btn-small" style="background: linear-gradient(135deg, #155724 0%, #155724 100%); color: white; padding: 10px 15px;">
           <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
         <h1><i class="fas fa-folder"></i> <?php echo in_array($user_role, ['clerk', 'director']) ? 'All Applications' : 'My Applications'; ?></h1>
       </div>
       <?php if (in_array($user_role, ['clerk', 'director'])): ?>
-        <a href="../admin/apply-for-others.php" class="btn-new"><i class="fas fa-plus"></i> Submit New Application</a>
+        <!-- No apply for others button -->
       <?php else: ?>
         <a href="apply.php" class="btn-new"><i class="fas fa-plus"></i> New Application</a>
       <?php endif; ?>
@@ -406,13 +454,32 @@ $upload_success = $_GET['success'] ?? '';
               <span class="app-type type-<?php echo strtolower($app['ip_type']); ?>"><?php echo htmlspecialchars($app['ip_type']); ?></span>
               
               <!-- Added payment notification for office_visit status -->
-              <?php if ($app['status'] === 'office_visit'): ?>
+              <?php if ($app['status'] === 'office_visit'): 
+                $payment_amount = !empty($app['payment_amount']) ? $app['payment_amount'] : IP_REGISTRATION_FEE;
+              ?>
                 <div style="margin-top: 10px; background: #FFF3CD; border-left: 4px solid #E07D32; padding: 10px; border-radius: 4px;">
                   <strong style="color: #E07D32; display: flex; align-items: center; gap: 6px; font-size: 13px;">
                     <i class="fas fa-exclamation-triangle"></i> Payment Required
                   </strong>
                   <p style="margin: 5px 0 0 0; font-size: 12px; color: #856404;">
-                    Visit CHMSU Cashier Office to pay registration fee, then upload your receipt.
+                    Visit CHMSU Cashier Office to pay registration fee of <strong>₱<?php echo number_format($payment_amount, 2); ?></strong>, then upload your receipt.
+                  </p>
+                </div>
+              <?php endif; ?>
+              
+              <!-- Payment rejection notification -->
+              <?php if ($app['status'] === 'payment_pending' && !empty($app['payment_rejection_reason'])): 
+                $payment_amount = !empty($app['payment_amount']) ? $app['payment_amount'] : IP_REGISTRATION_FEE;
+              ?>
+                <div style="margin-top: 10px; background: #f8d7da; border-left: 4px solid #dc3545; padding: 10px; border-radius: 4px;">
+                  <strong style="color: #721c24; display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                    <i class="fas fa-times-circle"></i> Payment Receipt Rejected
+                  </strong>
+                  <p style="margin: 5px 0 0 0; font-size: 12px; color: #721c24;">
+                    <strong>Reason:</strong> <?php echo htmlspecialchars($app['payment_rejection_reason']); ?>
+                  </p>
+                  <p style="margin: 8px 0 0 0; font-size: 12px; color: #856404;">
+                    Please upload a new payment receipt. Required amount: <strong>₱<?php echo number_format($payment_amount, 2); ?></strong>
                   </p>
                 </div>
               <?php endif; ?>
@@ -420,10 +487,19 @@ $upload_success = $_GET['success'] ?? '';
             <div style="display: flex; align-items: center; gap: 15px;">
               <span class="status-badge status-<?php echo $app['status']; ?>"><?php echo ucwords(str_replace('_', ' ', $app['status'])); ?></span>
               <div class="app-actions">
-                <a href="view-application.php?id=<?php echo $app['id']; ?>" class="btn-small"><i class="fas fa-eye"></i> View</a>
-                <?php if ($app['status'] === 'office_visit'): ?>
+                <?php if ($app['status'] === 'draft'): ?>
+                  <a href="apply.php?id=<?php echo $app['id']; ?>" class="btn-small" style="background: #f0f4ff; color: #667eea; border-color: #667eea;"><i class="fas fa-pen"></i> Continue</a>
+                <?php else: ?>
+                  <a href="view-application.php?id=<?php echo $app['id']; ?>" class="btn-small"><i class="fas fa-eye"></i> View</a>
+                <?php endif; ?>
+                <?php if ($app['status'] === 'office_visit' || ($app['status'] === 'payment_pending' && !empty($app['payment_rejection_reason']))): ?>
                   <a href="upload-payment.php?id=<?php echo $app['id']; ?>" class="btn-small" style="background: #E07D32; color: white; border-color: #E07D32;">
-                    <i class="fas fa-receipt"></i> Upload Payment
+                    <i class="fas fa-receipt"></i> <?php echo !empty($app['payment_rejection_reason']) ? 'Resubmit Payment' : 'Upload Payment'; ?>
+                  </a>
+                <?php endif; ?>
+                <?php if ($app['status'] === 'approved' && !empty($app['cert_id'])): ?>
+                  <a href="../certificate/generate.php?id=<?php echo $app['cert_id']; ?>" class="btn-small" style="background: #DAA520; color: white; border-color: #DAA520;" target="_blank">
+                    <i class="fas fa-certificate"></i> View Certificate
                   </a>
                 <?php endif; ?>
               </div>

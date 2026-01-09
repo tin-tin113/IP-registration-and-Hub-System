@@ -31,6 +31,13 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $recent = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
+
+// Check for pending publish permission requests
+$pending_permission_stmt = $conn->prepare("SELECT COUNT(*) as count FROM ip_applications WHERE user_id = ? AND publish_permission = 'pending'");
+$pending_permission_stmt->bind_param("i", $user_id);
+$pending_permission_stmt->execute();
+$pending_permissions = $pending_permission_stmt->get_result()->fetch_assoc()['count'];
+$pending_permission_stmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,8 +57,8 @@ $stmt->close();
     
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #F1F5F9;
-      min-height: 100vh;
+      background: #F8FAFC;
+      color: #1E293B;
     }
     
     .navbar {
@@ -368,117 +375,354 @@ $stmt->close();
       text-transform: capitalize;
     }
     
-    @media (max-width: 768px) {
-      .user-details {
-        display: none;
+    .top-bar {
+      background: linear-gradient(135deg, #0A4D2E 0%, #1B7F4D 100%);
+      color: white;
+      padding: 20px 32px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .top-bar-left {
+      width: 100%;
+    }
+
+    .top-bar-left h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .top-bar-left p {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    .profile-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,0.1);
+      padding: 12px 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      white-space: nowrap;
+    }
+
+    .profile-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #DAA520 0%, #FFD700 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0A4D2E;
+      font-weight: 700;
+      font-size: 18px;
+      box-shadow: 0 4px 12px rgba(218, 165, 32, 0.4);
+      flex-shrink: 0;
+    }
+
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .profile-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .profile-role {
+      font-size: 12px;
+      opacity: 0.9;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255,255,255,0.25);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 1024px) {
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px 24px;
       }
       
-      .welcome-card h1 {
+      .top-bar-left {
+        width: 100%;
+      }
+      
+      .profile-section {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 8px;
+      }
+
+      body.sidebar-active {
+        margin-left: 240px;
+      }
+      
+      div[style*="margin-left: 280px"] {
+        margin-left: 240px !important;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+    }
+
+    @media (max-width: 768px) {
+      body.sidebar-active {
+        margin-left: 0;
+      }
+      
+      div[style*="margin-left: 280px"] {
+        margin-left: 0 !important;
+      }
+
+      .container {
+        padding: 20px 16px;
+      }
+
+      .top-bar {
+        padding: 16px;
+      }
+
+      .top-bar-left h1 {
+        font-size: 20px;
+      }
+
+      .profile-section {
+        padding: 10px 16px;
+        background: rgba(255,255,255,0.15);
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr; /* Stack vertically on mobile */
+        gap: 16px;
+      }
+
+      .stat-card {
+        padding: 20px;
+      }
+      
+      .stat-number {
         font-size: 28px;
+      }
+
+      .actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      
+      .action-btn {
+        padding: 20px 12px;
+      }
+      
+      .action-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+      }
+      
+      .app-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      
+      .status-badge {
+        align-self: flex-start;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .actions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .top-bar-left h1 {
+        font-size: 18px;
+      }
+      
+      .profile-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      
+      .logout-btn {
+        width: 100%;
+        justify-content: center;
       }
     }
   </style>
 </head>
 <body>
-  <div class="navbar">
-    <div class="logo">
-      <img src="public/logos/chmsu-logo.png" alt="CHMSU" class="logo-img" onerror="this.src='public/logos/chmsu-logo.jpg'; this.onerror=null;">
-      <span>CHMSU IP System</span>
-    </div>
-    <div class="nav-right">
-      <div class="user-info">
-        <div class="user-avatar"><?php echo strtoupper(substr($user_name, 0, 1)); ?></div>
-        <div class="user-details">
-          <div class="user-name"><?php echo htmlspecialchars($user_name); ?></div>
-          <div class="user-role"><?php echo ucfirst($user_role); ?></div>
-        </div>
-      </div>
-      <a href="?logout" class="btn-logout">
-        <i class="fas fa-arrow-right-from-bracket"></i>
-        Logout
-      </a>
-    </div>
-  </div>
+  <?php require_once 'includes/sidebar.php'; ?>
   
-  <div class="container">
-    <div class="welcome-card">
-      <h1>Welcome back, <?php echo htmlspecialchars(explode(' ', $user_name)[0]); ?>!</h1>
-      <p>CHMSU Intellectual Property Registration and Hub System</p>
-    </div>
-    
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="fas fa-file-lines"></i>
-        </div>
-        <div class="stat-number"><?php echo $stats['total']; ?></div>
-        <div class="stat-label">Total Applications</div>
+  <!-- Main Content -->
+  <div style="padding: 0;">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <h1>Welcome back, <?php echo htmlspecialchars(explode(' ', $user_name)[0]); ?>!</h1>
+        <p>CHMSU Intellectual Property Registration and Hub System</p>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background: linear-gradient(135deg, #DAA520 0%, #FFD700 100%); color: white;">
-          <i class="fas fa-circle-check"></i>
+
+      <div class="profile-section">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="profile-avatar">
+            <?php echo strtoupper(substr($user_name, 0, 1)); ?>
+          </div>
+          <div class="profile-info">
+            <div class="profile-name"><?php echo htmlspecialchars($user_name); ?></div>
+            <div class="profile-role"><?php echo ucfirst($user_role); ?></div>
+          </div>
         </div>
-        <div class="stat-number" style="color: #DAA520;"><?php echo $stats['approved']; ?></div>
-        <div class="stat-label">Approved Works</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); color: white;">
-          <i class="fas fa-lightbulb"></i>
-        </div>
-        <div class="stat-number" style="color: #6366F1;"><?php echo $user_points; ?></div>
-        <div class="stat-label">Innovation Points</div>
+        <a href="?logout" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </a>
       </div>
     </div>
-    
-    <div class="actions-grid">
-      <?php if ($user_role === 'user'): ?>
-        <a href="app/apply.php" class="action-btn">
-          <div class="action-icon">
-            <i class="fas fa-plus-circle"></i>
-          </div>
-          <span>Submit New IP</span>
-        </a>
-        <a href="app/my-applications.php" class="action-btn">
-          <div class="action-icon">
-            <i class="fas fa-folder-open"></i>
-          </div>
-          <span>View Applications</span>
-        </a>
+
+    <!-- Container -->
+    <div class="container">
+      <!-- Alert Messages -->
+      <?php if (isset($_GET['success'])): ?>
+        <div style="background: #D1FAE5; color: #065F46; padding: 16px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid #10B981; display: flex; align-items: center; gap: 12px;">
+          <i class="fas fa-check-circle" style="font-size: 18px;"></i>
+          <span style="font-weight: 500;"><?php echo htmlspecialchars($_GET['success']); ?></span>
+        </div>
       <?php endif; ?>
-      <a href="hub/browse.php" class="action-btn">
-        <div class="action-icon">
-          <i class="fas fa-magnifying-glass"></i>
+
+      <?php if (isset($_GET['error'])): ?>
+        <div style="background: #FEE2E2; color: #7F1D1D; padding: 16px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid #EF4444; display: flex; align-items: center; gap: 12px;">
+          <i class="fas fa-exclamation-triangle" style="font-size: 18px;"></i>
+          <span style="font-weight: 500;"><?php echo htmlspecialchars($_GET['error']); ?></span>
         </div>
-        <span>Browse IP Hub</span>
-      </a>
-      <a href="profile/badges-certificates.php" class="action-btn">
-        <div class="action-icon">
-          <i class="fas fa-user-circle"></i>
-        </div>
-        <span>My Profile</span>
-      </a>
-      <!-- Updated help link to new help.php page -->
-      <a href="help.php" class="action-btn">
-        <div class="action-icon">
-          <i class="fas fa-circle-question"></i>
-        </div>
-        <span>Help & Guide</span>
-      </a>
-      <?php if (in_array($user_role, ['clerk', 'director'])): ?>
-        <a href="admin/dashboard.php" class="action-btn">
-          <div class="action-icon" style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);">
-            <i class="fas fa-gear"></i>
-          </div>
-          <span>Admin Panel</span>
-        </a>
       <?php endif; ?>
-    </div>
-    
-    <?php if (count($recent) > 0): ?>
+
+      <?php if ($pending_permissions > 0): ?>
+        <div style="background: #FEF3C7; color: #92400E; padding: 16px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid #F59E0B; display: flex; align-items: center; gap: 12px;">
+          <i class="fas fa-bell" style="font-size: 18px;"></i>
+          <span style="font-weight: 500;">You have <?php echo $pending_permissions; ?> approved work(s) waiting for publishing permission. <a href="app/permission-request.php" style="color: #92400E; font-weight: 700; text-decoration: underline;">Review now</a></span>
+        </div>
+      <?php endif; ?>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+            <div>
+              <p class="stat-label">Total Applications</p>
+              <p class="stat-number"><?php echo $stats['total']; ?></p>
+            </div>
+            <div class="stat-icon">
+              <i class="fas fa-file-lines"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+            <div>
+              <p class="stat-label">Approved Works</p>
+              <p class="stat-number"><?php echo $stats['approved']; ?></p>
+            </div>
+            <div class="stat-icon">
+              <i class="fas fa-circle-check"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+            <div>
+              <p class="stat-label">Innovation Points</p>
+              <p class="stat-number"><?php echo $user_points; ?></p>
+            </div>
+            <div class="stat-icon">
+              <i class="fas fa-lightbulb"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="margin-bottom: 32px;">
+        <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #1E293B;">
+          <i class="fas fa-lightning-bolt" style="color: #DAA520; margin-right: 8px;"></i>
+          Quick Actions
+        </h2>
+        <div class="actions-grid">
+          <a href="app/apply.php" class="action-btn">
+            <div class="action-icon">
+              <i class="fas fa-plus-circle"></i>
+            </div>
+            <div>Submit New IP</div>
+          </a>
+          <a href="app/my-applications.php" class="action-btn">
+            <div class="action-icon">
+              <i class="fas fa-folder-open"></i>
+            </div>
+            <div>View Applications</div>
+          </a>
+          <a href="hub/browse.php" class="action-btn">
+            <div class="action-icon">
+              <i class="fas fa-magnifying-glass"></i>
+            </div>
+            <div>Browse IP Hub</div>
+          </a>
+          <a href="profile/badges-certificates.php" class="action-btn">
+            <div class="action-icon">
+              <i class="fas fa-user-circle"></i>
+            </div>
+            <div>My Profile</div>
+          </a>
+          <a href="help.php" class="action-btn">
+            <div class="action-icon">
+              <i class="fas fa-circle-question"></i>
+            </div>
+            <div>Help & Guide</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Recent Applications -->
+      <?php if (count($recent) > 0): ?>
       <div class="recent-apps">
         <div class="section-header">
-          <i class="fas fa-clock-rotate-left"></i>
-          Recent Applications
+          <h2 style="margin: 0;">Recent Applications</h2>
         </div>
         <?php foreach ($recent as $app): ?>
           <div class="app-row">
@@ -490,13 +734,14 @@ $stmt->close();
           </div>
         <?php endforeach; ?>
       </div>
-    <?php endif; ?>
+      <?php endif; ?>
+    </div>
+
+    <!-- Footer -->
+    <footer style="background: linear-gradient(135deg, #0A4D2E 0%, #1B7F4D 100%); color: white; padding: 32px 24px; text-align: center; margin-top: 60px;">
+      <p style="font-size: 14px; opacity: 0.9;">&copy; <?php echo date('Y'); ?> Carlos Hilado Memorial State University. All rights reserved.</p>
+      <p style="margin-top: 8px; font-size: 12px; opacity: 0.8;">Intellectual Property Office • Talisay City Negros Occidental</p>
+    </footer>
   </div>
-  
-  <!-- Footer -->
-  <footer class="footer" style="background: #1E293B; color: white; padding: 40px 24px; text-align: center; margin-top: 60px;">
-    <p style="opacity: 0.8; font-size: 14px;">&copy; 2025 Carlos Hilado Memorial State University. All rights reserved.</p>
-    <p style="margin-top: 8px; font-size: 12px; opacity: 0.8;">Intellectual Property Office • Carlos Hilado Memorial State University • Talisay City Negros Occidental</p>
-  </footer>
 </body>
 </html>

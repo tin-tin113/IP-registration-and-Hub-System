@@ -268,17 +268,6 @@ while ($row = $settings_result->fetch_assoc()) {
         
         <div class="form-section">
           <h3><i class="fas fa-signature"></i> Signatures</h3>
-          
-          <div class="form-group">
-            <label for="setting_clerk_name">Clerk Name</label>
-            <input type="text" id="setting_clerk_name" name="setting_clerk_name" value="<?php echo htmlspecialchars($settings['clerk_name'] ?? 'Maria Santos'); ?>" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="setting_clerk_title">Clerk Title</label>
-            <input type="text" id="setting_clerk_title" name="setting_clerk_title" value="<?php echo htmlspecialchars($settings['clerk_title'] ?? 'IP Office Clerk'); ?>" required>
-          </div>
-          
           <div class="form-group">
             <label for="setting_director_name">Director Name</label>
             <input type="text" id="setting_director_name" name="setting_director_name" value="<?php echo htmlspecialchars($settings['director_name'] ?? 'Dr. Juan Dela Cruz'); ?>" required>
@@ -298,4 +287,3 @@ while ($row = $settings_result->fetch_assoc()) {
   </div>
 </body>
 </html>
-

@@ -18,7 +18,7 @@ if (!$cert_id) {
 if (in_array($user_role, ['clerk', 'director'])) {
   // Admin can view any certificate
   $stmt = $conn->prepare("
-    SELECT c.*, a.title, a.ip_type, a.description, a.approved_at, 
+    SELECT c.*, a.title, a.ip_type, a.abstract, a.approved_at, a.inventor_name,
            u.full_name, u.email, u.department
     FROM certificates c
     JOIN ip_applications a ON c.application_id = a.id
@@ -29,7 +29,7 @@ if (in_array($user_role, ['clerk', 'director'])) {
 } else {
   // Users can only view their own certificates
   $stmt = $conn->prepare("
-    SELECT c.*, a.title, a.ip_type, a.description, a.approved_at, 
+    SELECT c.*, a.title, a.ip_type, a.abstract, a.approved_at, a.inventor_name,
            u.full_name, u.email, u.department
     FROM certificates c
     JOIN ip_applications a ON c.application_id = a.id
@@ -379,7 +379,13 @@ $approval_date = date('F d, Y', strtotime($cert['approved_at']));
 </head>
 <body>
   <div class="controls">
-    <a href="javascript:history.back()" class="btn btn-back">
+    <?php
+      // Check if we came from profile page
+      $referer = $_SERVER['HTTP_REFERER'] ?? '';
+      $from_profile = strpos($referer, 'profile/badges-certificates.php') !== false;
+      $back_url = $from_profile ? '../profile/badges-certificates.php' : '../dashboard.php';
+    ?>
+    <a href="<?php echo $back_url; ?>" class="btn btn-back">
       <i class="fas fa-arrow-left"></i> Back
     </a>
     <button onclick="window.print()" class="btn btn-print">
@@ -408,7 +414,7 @@ $approval_date = date('F d, Y', strtotime($cert['approved_at']));
       <div class="cert-body">
         <p><?php echo htmlspecialchars($body_text); ?></p>
         
-        <div class="recipient-name"><?php echo strtoupper(htmlspecialchars($cert['full_name'])); ?></div>
+        <div class="recipient-name" style="text-align: center; white-space: pre-line;"><?php echo strtoupper(htmlspecialchars($cert['inventor_name'] ?? $cert['full_name'])); ?></div>
         
         <?php if ($cert['department']): ?>
           <p style="font-size: 14px; color: #666;">

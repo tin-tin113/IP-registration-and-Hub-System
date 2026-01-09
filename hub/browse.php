@@ -8,11 +8,11 @@ $filter_type = trim($_GET['type'] ?? 'all');
 $user_id = isLoggedIn() ? getCurrentUserId() : null;
 
 // Build query
-$query = "SELECT a.*, u.full_name, u.email, COUNT(DISTINCT v.id) as view_count FROM ip_applications a JOIN users u ON a.user_id=u.id LEFT JOIN view_tracking v ON a.id=v.application_id WHERE a.status='approved'";
+$query = "SELECT a.*, u.full_name, u.email, COUNT(DISTINCT v.id) as view_count FROM ip_applications a JOIN users u ON a.user_id=u.id LEFT JOIN view_tracking v ON a.id=v.application_id WHERE a.status='approved' AND a.publish_permission='granted'";
 
 if (!empty($search)) {
   $search_term = '%' . $conn->real_escape_string($search) . '%';
-  $query .= " AND (a.title LIKE '$search_term' OR a.description LIKE '$search_term' OR u.full_name LIKE '$search_term')";
+  $query .= " AND (a.title LIKE '$search_term' OR a.abstract LIKE '$search_term' OR u.full_name LIKE '$search_term')";
 }
 
 if ($filter_type !== 'all') {
@@ -309,7 +309,7 @@ $works = $result->fetch_all(MYSQLI_ASSOC);
       color: #92400E;
     }
     
-    .work-description {
+    .work-abstract {
       font-size: 14px;
       color: #64748B;
       line-height: 1.6;
@@ -318,6 +318,9 @@ $works = $result->fetch_all(MYSQLI_ASSOC);
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      width: 100%;
     }
     
     .work-creator {
@@ -359,12 +362,81 @@ $works = $result->fetch_all(MYSQLI_ASSOC);
     }
     
     @media (max-width: 768px) {
+      .navbar {
+        padding: 12px 16px;
+      }
+
+      .nav-container {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      
+      .nav-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+
       .header h1 {
         font-size: 36px;
       }
       
+      .header p {
+        font-size: 16px;
+      }
+      
       .works-grid {
         grid-template-columns: 1fr;
+      }
+      
+      .search-box {
+        flex-direction: column;
+      }
+      
+      .search-btn {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .work-abstract {
+        font-size: 13px;
+        -webkit-line-clamp: 2;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 28px;
+      }
+      
+      .header p {
+        font-size: 14px;
+      }
+      
+      .container {
+        padding: 16px 12px;
+      }
+      
+      .search-input {
+        font-size: 16px; /* Prevents zoom on iOS */
+      }
+      
+      .work-title {
+        font-size: 16px;
+      }
+      
+      .work-abstract {
+        font-size: 12px;
+        -webkit-line-clamp: 2;
+      }
+      
+      .nav-right {
+        flex-wrap: wrap;
+      }
+      
+      .nav-right a {
+        font-size: 13px;
+        padding: 6px 12px;
       }
     }
   </style>
@@ -395,7 +467,7 @@ $works = $result->fetch_all(MYSQLI_ASSOC);
     </div>
     
     <form method="GET" class="search-box">
-      <input type="text" name="search" class="search-input" placeholder="Search by title, description, or author..." value="<?php echo htmlspecialchars($search); ?>">
+      <input type="text" name="search" class="search-input" placeholder="Search by title, abstract, or author..." value="<?php echo htmlspecialchars($search); ?>">
       <button type="submit" class="search-btn">
         <i class="fas fa-magnifying-glass"></i> Search
       </button>
@@ -434,7 +506,7 @@ $works = $result->fetch_all(MYSQLI_ASSOC);
             <div class="work-body">
               <span class="work-type type-<?php echo strtolower($work['ip_type']); ?>"><?php echo $work['ip_type']; ?></span>
               
-              <div class="work-description"><?php echo htmlspecialchars($work['description']); ?></div>
+              <div class="work-abstract"><?php echo htmlspecialchars($work['abstract']); ?></div>
               
               <div class="work-creator">
                 <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($work['full_name']); ?>

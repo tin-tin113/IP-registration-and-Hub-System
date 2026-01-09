@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $security_answer = strtolower(trim($_POST['security_answer'] ?? ''));
   $department = trim($_POST['department'] ?? '');
   
-  if (empty($email) || empty($password) || empty($full_name) || empty($security_answer)) {
+  if (empty($email) || empty($password) || empty($full_name) || empty($security_question) || empty($security_answer)) {
     $error = 'All fields are required';
   } elseif (strlen($password) < 6) {
     $error = 'Password must be at least 6 characters';
@@ -226,6 +226,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .login-link a:hover {
       text-decoration: underline;
       color: #0A4D2E;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 20px 16px;
+      }
+      
+      .register-container {
+        padding: 32px 20px;
+        border-radius: 16px;
+      }
+      
+      .register-header h1 {
+        font-size: 24px;
+      }
+      
+      .logo {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+      }
+
+      /* Reduce scale of decorative blob */
+      body::before {
+        transform: scale(0.6);
+        top: -300px;
+        right: -300px;
+      }
     }
   </style>
 </head>

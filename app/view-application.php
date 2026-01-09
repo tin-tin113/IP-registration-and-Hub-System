@@ -13,7 +13,8 @@ if (!$app_id) {
   exit;
 }
 
-$stmt = $conn->prepare("SELECT * FROM ip_applications WHERE id = ? AND user_id = ?");
+// Get application with certificate info
+$stmt = $conn->prepare("SELECT a.*, c.id as cert_id FROM ip_applications a LEFT JOIN certificates c ON a.id = c.application_id WHERE a.id = ? AND a.user_id = ?");
 $stmt->bind_param("ii", $app_id, $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -154,13 +155,14 @@ if (!empty($app['document_file'])) {
       color: #333;
     }
     
-    .description {
+    .abstract {
       background: #f9f9f9;
       padding: 15px;
       border-radius: 5px;
       border-left: 4px solid #667eea;
       margin: 20px 0;
       line-height: 1.6;
+      overflow-wrap: break-word;
     }
     
     .workflow-steps {
@@ -256,18 +258,40 @@ if (!empty($app['document_file'])) {
       
       <div class="info-row">
         <div class="info-group">
-          <div class="info-label">Reference Number</div>
-          <div class="info-value"><?php echo $app['reference_number'] ?? 'Pending'; ?></div>
+          <div class="info-label">Inventor Name</div>
+          <div class="info-value"><?php echo nl2br(htmlspecialchars($app['inventor_name'] ?? '')); ?></div>
         </div>
         <div class="info-group">
           <div class="info-label">Certificate ID</div>
           <div class="info-value"><?php echo $app['certificate_id'] ?? 'Not Yet Generated'; ?></div>
         </div>
+        <?php if (in_array($app['status'], ['office_visit', 'payment_pending', 'payment_verified'])): 
+          $payment_amount = !empty($app['payment_amount']) ? $app['payment_amount'] : IP_REGISTRATION_FEE;
+        ?>
+        <div class="info-group">
+          <div class="info-label">Registration Fee</div>
+          <div class="info-value" style="color: #E07D32; font-weight: 600;">₱<?php echo number_format($payment_amount, 2); ?></div>
+        </div>
+        <?php endif; ?>
       </div>
       
+      <?php if ($app['status'] === 'payment_pending' && !empty($app['payment_rejection_reason'])): ?>
+        <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; border-left: 4px solid #dc3545; margin-bottom: 20px;">
+          <strong><i class="fas fa-exclamation-triangle"></i> Payment Receipt Rejected</strong>
+          <p style="margin: 10px 0 0 0; font-size: 14px;">
+            <strong>Reason:</strong><br>
+            <?php echo nl2br(htmlspecialchars($app['payment_rejection_reason'])); ?>
+          </p>
+          <p style="margin: 10px 0 0 0; font-size: 13px; color: #856404;">
+            <i class="fas fa-info-circle"></i> Please upload a new payment receipt. You can resubmit from the "My Applications" page.
+          </p>
+        </div>
+      <?php endif; ?>
+      
       <div style="margin-bottom: 20px;">
-        <h3 style="color: #333; margin-bottom: 10px; font-size: 14px;">Description</h3>
-        <div class="description"><?php echo htmlspecialchars($app['description']); ?></div>
+        <h3 style="color: #333; margin-bottom: 10px; font-size: 14px;">Abstract</h3>
+
+        <div class="abstract"><?php echo htmlspecialchars($app['abstract']); ?></div>
       </div>
       
       <!-- Updated document viewing section to display multiple files -->
@@ -298,9 +322,14 @@ if (!empty($app['document_file'])) {
                     <?php endif; ?>
                   </p>
                 </div>
-                <a href="../uploads/<?php echo htmlspecialchars($file); ?>" download style="background: #1B5C3B; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 13px;">
-                  <i class="fas fa-download"></i> Download
-                </a>
+                <div class="document-actions">
+                    <a href="../uploads/<?php echo htmlspecialchars($file); ?>" target="_blank" class="btn-view" style="background: #F1F5F9; color: #475569; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 13px; border: 1px solid #E2E8F0; display: inline-flex; align-items: center; gap: 6px;">
+                      <i class="fas fa-eye"></i> View
+                    </a>
+                    <a href="../uploads/<?php echo htmlspecialchars($file); ?>" download style="background: #1B5C3B; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                      <i class="fas fa-download"></i> Download
+                    </a>
+                  </div>
               </div>
             </div>
           <?php endforeach; ?>
@@ -318,6 +347,20 @@ if (!empty($app['document_file'])) {
         <div class="feedback-box <?php echo $app['status'] === 'rejected' ? 'rejected' : ''; ?>">
           <strong><i class="fas fa-comments"></i> Director Feedback:</strong>
           <p style="margin-top: 5px;"><?php echo htmlspecialchars($app['director_feedback']); ?></p>
+        </div>
+      <?php endif; ?>
+      
+      <?php if ($app['status'] === 'approved' && !empty($app['cert_id'])): ?>
+        <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #DAA520 0%, #FFD700 100%); border-radius: 8px; text-align: center;">
+          <h3 style="color: white; margin-bottom: 15px; font-size: 18px;">
+            <i class="fas fa-certificate"></i> Certificate Available
+          </h3>
+          <p style="color: rgba(255,255,255,0.9); margin-bottom: 15px; font-size: 14px;">
+            Your IP application has been approved and a certificate has been generated.
+          </p>
+          <a href="../certificate/generate.php?id=<?php echo $app['cert_id']; ?>" target="_blank" style="display: inline-block; background: white; color: #DAA520; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-weight: 600; font-size: 14px; transition: transform 0.2s;">
+            <i class="fas fa-certificate"></i> View Certificate
+          </a>
         </div>
       <?php endif; ?>
     </div>

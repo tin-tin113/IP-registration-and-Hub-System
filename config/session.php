@@ -71,4 +71,3 @@ if (isset($_GET['logout'])) {
   header("Location: " . BASE_URL . "auth/login.php?message=Logged out successfully");
   exit;
 }
-?>

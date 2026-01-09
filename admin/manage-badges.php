@@ -14,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
   $platinum = intval($_POST['platinum_threshold'] ?? 250);
   $diamond = intval($_POST['diamond_threshold'] ?? 500);
   
-  // Update thresholds in database
   $conn->query("DELETE FROM badge_thresholds");
   $stmt = $conn->prepare("INSERT INTO badge_thresholds (badge_type, views_required, points_awarded) VALUES (?, ?, ?)");
   
@@ -36,14 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
   $success = 'Badge thresholds updated successfully!';
 }
 
-// Get current thresholds
 $thresholds_result = $conn->query("SELECT * FROM badge_thresholds ORDER BY views_required ASC");
 $thresholds = [];
 while ($row = $thresholds_result->fetch_assoc()) {
   $thresholds[$row['badge_type']] = $row;
 }
 
-// If no thresholds exist, set defaults
 if (empty($thresholds)) {
   $default_thresholds = [
     'Bronze' => ['views_required' => 10, 'points_awarded' => 50],
@@ -91,91 +88,109 @@ $users = $users_result->fetch_all(MYSQLI_ASSOC);
     }
     
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
       background: #f5f7fa;
       min-height: 100vh;
-      padding: 20px;
     }
     
+    /* Restored original spacing with margin-left instead of flex layout */
     .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .back-btn {
-      background: #f0f0f0;
-      color: #333;
-      padding: 10px 15px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      margin-bottom: 20px;
-      font-size: 13px;
+      margin-left: 0px;
+      padding: 30px;
+      max-width: 1400px;
     }
     
     .header {
-      background: white;
+      background: linear-gradient(135deg, #0A4D2E 0%, #1B5C3B 100%);
+      color: white;
       padding: 30px;
       border-radius: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(10, 77, 46, 0.2);
     }
     
     .header h1 {
-      color: #1B5C3B;
+      font-size: 28px;
       margin-bottom: 10px;
+    }
+    
+    .header p {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
     }
     
     .alert {
       padding: 15px;
-      border-radius: 5px;
+      border-radius: 6px;
       margin-bottom: 20px;
       background: #d4edda;
       color: #155724;
       border: 1px solid #c3e6cb;
+      border-left: 4px solid #28a745;
     }
     
     .info-box {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #0A4D2E 0%, #1B5C3B 100%);
       color: white;
       padding: 20px;
       border-radius: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
+      border-left: 4px solid #DAA520;
     }
     
     .info-box h3 {
-      margin-bottom: 10px;
-      font-size: 18px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      color: #DAA520;
+    }
+    
+    .info-box ul {
+      margin-left: 20px;
+    }
+    
+    .info-box li {
+      margin-bottom: 8px;
+      font-size: 13px;
+      line-height: 1.6;
     }
     
     .threshold-card {
       background: white;
       border-radius: 10px;
       padding: 30px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      margin-bottom: 30px;
+    }
+    
+    .threshold-card h2 {
+      color: #0A4D2E;
       margin-bottom: 20px;
+      font-size: 20px;
     }
     
     .threshold-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
     }
     
     .threshold-item {
-      background: #f9f9f9;
+      background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
       padding: 20px;
       border-radius: 8px;
-      border-left: 4px solid #1B5C3B;
+      border-left: 4px solid #0A4D2E;
+      transition: all 0.3s ease;
+    }
+    
+    .threshold-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .badge-icon {
-      font-size: 32px;
-      margin-bottom: 10px;
+      font-size: 36px;
+      margin-bottom: 15px;
     }
     
     .bronze { color: #CD7F32; }
@@ -186,41 +201,65 @@ $users = $users_result->fetch_all(MYSQLI_ASSOC);
     
     label {
       display: block;
-      margin-bottom: 5px;
-      color: #333;
-      font-weight: 600;
+      margin-bottom: 8px;
+      color: #0A4D2E;
+      font-weight: 700;
       font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
     
     input[type="number"] {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       border: 1px solid #ddd;
-      border-radius: 5px;
+      border-radius: 6px;
       font-size: 14px;
+      transition: all 0.3s ease;
     }
     
-    button {
-      background: #1B5C3B;
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #0A4D2E;
+      box-shadow: 0 0 5px rgba(10, 77, 46, 0.3);
+    }
+    
+    small {
+      color: #999;
+      font-size: 12px;
+      display: block;
+      margin-top: 6px;
+    }
+    
+    .save-btn {
+      background: linear-gradient(135deg, #0A4D2E 0%, #1B5C3B 100%);
       color: white;
-      padding: 12px 30px;
+      padding: 14px 30px;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
+      transition: all 0.3s ease;
     }
     
-    button:hover {
-      background: #0F3D2E;
+    .save-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(10, 77, 46, 0.3);
     }
     
     .user-table {
       background: white;
       border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
       overflow-x: auto;
+    }
+    
+    .user-table h2 {
+      color: #0A4D2E;
+      margin-bottom: 20px;
+      font-size: 20px;
     }
     
     table {
@@ -229,30 +268,39 @@ $users = $users_result->fetch_all(MYSQLI_ASSOC);
     }
     
     th, td {
-      padding: 12px;
+      padding: 15px;
       text-align: left;
       border-bottom: 1px solid #f0f0f0;
       font-size: 13px;
     }
     
     th {
-      background: #f9f9f9;
-      font-weight: 600;
-      color: #333;
+      background: #f5f7fa;
+      font-weight: 700;
+      color: #0A4D2E;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-bottom: 2px solid #DAA520;
+    }
+    
+    td strong {
+      color: #0A4D2E;
     }
     
     .badge-list {
       display: flex;
-      gap: 5px;
+      gap: 8px;
       flex-wrap: wrap;
     }
     
     .badge-tag {
       display: inline-block;
-      padding: 4px 8px;
+      padding: 6px 12px;
       border-radius: 12px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
     
     .badge-tag.bronze { background: #CD7F32; color: white; }
@@ -260,17 +308,51 @@ $users = $users_result->fetch_all(MYSQLI_ASSOC);
     .badge-tag.gold { background: #FFD700; color: #333; }
     .badge-tag.platinum { background: #E5E4E2; color: #333; }
     .badge-tag.diamond { background: #B9F2FF; color: #333; }
+    
+    .no-badges {
+      color: #999;
+      font-style: italic;
+    }
+    
+    @media (max-width: 1024px) {
+      .container {
+        margin-left: 240px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        margin-left: 0;
+        padding: 20px;
+      }
+      
+      .threshold-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+      
+      .header h1 {
+        font-size: 22px;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .container {
+        padding: 15px;
+      }
+      
+      .threshold-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
+  <?php require_once '../includes/sidebar.php'; ?>
+  
   <div class="container">
-    <a href="dashboard.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
-    
     <div class="header">
       <h1><i class="fas fa-medal"></i> Badge System Management</h1>
-      <p style="color: #666; font-size: 14px; margin-top: 5px;">
-        Manage view thresholds for automatic badge awarding. Badges are awarded automatically when IP works reach view milestones.
-      </p>
+      <p>Manage view thresholds for automatic badge awarding. Badges are awarded automatically when IP works reach view milestones.</p>
     </div>
     
     <?php if (!empty($success)): ?>
@@ -279,7 +361,7 @@ $users = $users_result->fetch_all(MYSQLI_ASSOC);
     
     <div class="info-box">
       <h3><i class="fas fa-info-circle"></i> How Badge System Works</h3>
-      <ul style="font-size: 14px; line-height: 1.8; margin-left: 20px;">
+      <ul>
         <li>Badges are automatically awarded when approved IP works reach view thresholds</li>
         <li>Users earn innovation points with each badge</li>
         <li>You can adjust thresholds below - system will automatically award badges based on new settings</li>
@@ -288,7 +370,7 @@ $users = $users_result->fetch_all(MYSQLI_ASSOC);
     </div>
     
     <div class="threshold-card">
-      <h2 style="margin-bottom: 20px; color: #333;"><i class="fas fa-sliders-h"></i> Badge Thresholds</h2>
+      <h2><i class="fas fa-sliders-h"></i> Badge Thresholds</h2>
       
       <form method="POST">
         <div class="threshold-grid">
@@ -296,46 +378,46 @@ $users = $users_result->fetch_all(MYSQLI_ASSOC);
             <div class="badge-icon bronze"><i class="fas fa-medal"></i></div>
             <label for="bronze">Bronze Badge</label>
             <input type="number" id="bronze" name="bronze_threshold" value="<?php echo $thresholds['Bronze']['views_required']; ?>" min="1" required>
-            <small style="color: #666;">Views required • Awards <?php echo $thresholds['Bronze']['points_awarded']; ?> points</small>
+            <small>Views required • Awards <?php echo $thresholds['Bronze']['points_awarded']; ?> points</small>
           </div>
           
           <div class="threshold-item">
             <div class="badge-icon silver"><i class="fas fa-medal"></i></div>
             <label for="silver">Silver Badge</label>
             <input type="number" id="silver" name="silver_threshold" value="<?php echo $thresholds['Silver']['views_required']; ?>" min="1" required>
-            <small style="color: #666;">Views required • Awards <?php echo $thresholds['Silver']['points_awarded']; ?> points</small>
+            <small>Views required • Awards <?php echo $thresholds['Silver']['points_awarded']; ?> points</small>
           </div>
           
           <div class="threshold-item">
             <div class="badge-icon gold"><i class="fas fa-medal"></i></div>
             <label for="gold">Gold Badge</label>
             <input type="number" id="gold" name="gold_threshold" value="<?php echo $thresholds['Gold']['views_required']; ?>" min="1" required>
-            <small style="color: #666;">Views required • Awards <?php echo $thresholds['Gold']['points_awarded']; ?> points</small>
+            <small>Views required • Awards <?php echo $thresholds['Gold']['points_awarded']; ?> points</small>
           </div>
           
           <div class="threshold-item">
             <div class="badge-icon platinum"><i class="fas fa-medal"></i></div>
             <label for="platinum">Platinum Badge</label>
             <input type="number" id="platinum" name="platinum_threshold" value="<?php echo $thresholds['Platinum']['views_required']; ?>" min="1" required>
-            <small style="color: #666;">Views required • Awards <?php echo $thresholds['Platinum']['points_awarded']; ?> points</small>
+            <small>Views required • Awards <?php echo $thresholds['Platinum']['points_awarded']; ?> points</small>
           </div>
           
           <div class="threshold-item">
             <div class="badge-icon diamond"><i class="fas fa-medal"></i></div>
             <label for="diamond">Diamond Badge</label>
             <input type="number" id="diamond" name="diamond_threshold" value="<?php echo $thresholds['Diamond']['views_required']; ?>" min="1" required>
-            <small style="color: #666;">Views required • Awards <?php echo $thresholds['Diamond']['points_awarded']; ?> points</small>
+            <small>Views required • Awards <?php echo $thresholds['Diamond']['points_awarded']; ?> points</small>
           </div>
         </div>
         
-        <button type="submit" name="action" value="update_thresholds">
+        <button type="submit" name="action" value="update_thresholds" class="save-btn">
           <i class="fas fa-save"></i> Save Thresholds
         </button>
       </form>
     </div>
     
     <div class="user-table">
-      <h2 style="margin-bottom: 20px; color: #333;"><i class="fas fa-users"></i> User Badge Status</h2>
+      <h2><i class="fas fa-users"></i> User Badge Status</h2>
       
       <table>
         <thead>
@@ -352,7 +434,7 @@ $users = $users_result->fetch_all(MYSQLI_ASSOC);
             <tr>
               <td>
                 <strong><?php echo htmlspecialchars($user['full_name']); ?></strong><br>
-                <small style="color: #666;"><?php echo htmlspecialchars($user['email']); ?></small>
+                <small style="color: #999;"><?php echo htmlspecialchars($user['email']); ?></small>
               </td>
               <td><?php echo $user['approved_works']; ?></td>
               <td><i class="fas fa-eye"></i> <?php echo $user['total_views']; ?></td>
@@ -369,7 +451,7 @@ $users = $users_result->fetch_all(MYSQLI_ASSOC);
                     <?php endforeach; ?>
                   </div>
                 <?php else: ?>
-                  <span style="color: #999;">No badges yet</span>
+                  <span class="no-badges">No badges yet</span>
                 <?php endif; ?>
               </td>
             </tr>

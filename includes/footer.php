@@ -80,4 +80,3 @@ $base_path = (strpos($_SERVER['PHP_SELF'], '/admin/') !== false || strpos($_SERV
   </footer>
 </body>
 </html>
-
