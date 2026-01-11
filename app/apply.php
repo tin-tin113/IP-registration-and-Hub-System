@@ -164,6 +164,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $profile_province = trim($_POST['profile_address_province'] ?? 'Negros Occidental');
   $profile_postal = trim($_POST['profile_address_postal'] ?? '');
   
+  // Server-side input sanitization
+  $name_pattern = '/[^A-Za-zÀ-ÿ\s\'\-]/u';
+  $profile_first_name = preg_replace($name_pattern, '', $profile_first_name);
+  $profile_middle_name = preg_replace($name_pattern, '', $profile_middle_name);
+  $profile_last_name = preg_replace($name_pattern, '', $profile_last_name);
+  $profile_nationality = preg_replace($name_pattern, '', $profile_nationality);
+  
+  $phone_pattern = '/[^\d\s()+\-]/';
+  $profile_contact = preg_replace($phone_pattern, '', $profile_contact);
+  
+  $address_pattern = '/[^A-Za-z0-9À-ÿ\s.,#\-\'\/]/u';
+  $profile_street = preg_replace($address_pattern, '', $profile_street);
+  $profile_barangay = preg_replace($address_pattern, '', $profile_barangay);
+  
+  $employee_pattern = '/[^A-Za-z0-9\-]/';
+  $profile_employee_id = preg_replace($employee_pattern, '', $profile_employee_id);
+  
+  $postal_pattern = '/[^0-9]/';
+  $profile_postal = preg_replace($postal_pattern, '', $profile_postal);
+  
+  $inventor_name_pattern = '/[^A-Za-zÀ-ÿ\s\'\-.,\n]/u';
+  $inventor_name = preg_replace($inventor_name_pattern, '', $inventor_name);
+  
   // Collect custom fields (admin-added fields)
   $customFields = [];
   $allFormFields = getActiveFormFields($conn);
@@ -843,6 +866,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         font-size: 16px;
       }
     }
+    
+    /* Shake animation for invalid input feedback */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+    }
   </style>
 </head>
 <body>
@@ -924,20 +955,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="hidden" name="app_id" value="<?php echo $app_id; ?>">
       <?php endif; ?>
       
+      <?php 
+      // Check for new unfilled required fields BEFORE displaying profile section
+      // This determines if section should auto-expand even if profile was marked complete
+      $newUnfilledFields = [];
+      foreach (getActiveFormFields($conn) as $field) {
+        if ($field['is_required'] && !$field['is_builtin']) {
+          $value = getFormFieldValue($field['field_name'], $user_profile ?? []);
+          if (empty($value)) {
+            $newUnfilledFields[] = $field['field_label'];
+          }
+        }
+      }
+      $hasNewRequiredFields = !empty($newUnfilledFields);
+      // Profile is truly complete only if is_complete AND no new required fields
+      $profileTrulyComplete = ($user_profile && $user_profile['is_complete']) && !$hasNewRequiredFields;
+      ?>
+      
       <!-- Personal Information Section (Collapsible) -->
-      <div style="background: <?php echo ($user_profile && $user_profile['is_complete']) ? '#D4EDDA' : '#FFF3CD'; ?>; border: 2px solid <?php echo ($user_profile && $user_profile['is_complete']) ? '#28a745' : '#ffc107'; ?>; border-radius: 12px; margin-bottom: 30px; overflow: hidden;">
-        <div onclick="toggleProfileSection()" style="padding: 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: <?php echo ($user_profile && $user_profile['is_complete']) ? 'linear-gradient(135deg, #28a745 0%, #20c997 100%)' : 'linear-gradient(135deg, #ffc107 0%, #fd7e14 100%)'; ?>; color: white;">
+      <div style="background: <?php echo $profileTrulyComplete ? '#D4EDDA' : '#FFF3CD'; ?>; border: 2px solid <?php echo $profileTrulyComplete ? '#28a745' : '#ffc107'; ?>; border-radius: 12px; margin-bottom: 30px; overflow: hidden;">
+        <div onclick="toggleProfileSection()" style="padding: 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: <?php echo $profileTrulyComplete ? 'linear-gradient(135deg, #28a745 0%, #20c997 100%)' : 'linear-gradient(135deg, #ffc107 0%, #fd7e14 100%)'; ?>; color: white;">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <i class="fas fa-<?php echo ($user_profile && $user_profile['is_complete']) ? 'check-circle' : 'user-edit'; ?>" style="font-size: 24px;"></i>
+            <i class="fas fa-<?php echo $profileTrulyComplete ? 'check-circle' : 'user-edit'; ?>" style="font-size: 24px;"></i>
             <div>
-              <h3 style="margin: 0; font-size: 16px;"><?php echo ($user_profile && $user_profile['is_complete']) ? 'Profile Complete ✓' : 'Personal Information Required'; ?></h3>
-              <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.9;"><?php echo ($user_profile && $user_profile['is_complete']) ? 'Click to view or update your information' : 'Please complete your profile for verification purposes'; ?></p>
+              <h3 style="margin: 0; font-size: 16px;"><?php echo $profileTrulyComplete ? 'Profile Complete ✓' : ($hasNewRequiredFields ? 'New Fields Required' : 'Personal Information Required'); ?></h3>
+              <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.9;"><?php echo $profileTrulyComplete ? 'Click to view or update your information' : ($hasNewRequiredFields ? 'Admin added new required fields - please complete them' : 'Please complete your profile for verification purposes'); ?></p>
             </div>
           </div>
           <i class="fas fa-chevron-down" id="profileToggleIcon" style="font-size: 18px; transition: transform 0.3s;"></i>
         </div>
         
-        <div id="profileFormSection" style="padding: 25px; display: <?php echo ($user_profile && $user_profile['is_complete']) ? 'none' : 'block'; ?>; background: white;">
+        <div id="profileFormSection" style="padding: 25px; display: <?php echo $profileTrulyComplete ? 'none' : 'block'; ?>; background: white;">
           <p style="font-size: 13px; color: #666; margin-bottom: 20px; padding: 12px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
             <i class="fas fa-shield-alt" style="color: #667eea;"></i> 
             <strong>Privacy Notice:</strong> This information is for verification purposes only and will only be visible to authorized CHMSU IP Office staff.
@@ -954,18 +1002,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'address' => 'Address Information'
           ];
           
-          // Check for new unfilled required fields (for notification)
-          $newUnfilledFields = [];
-          foreach (getActiveFormFields($conn) as $field) {
-            if ($field['is_required'] && !$field['is_builtin']) {
-              $value = getFormFieldValue($field['field_name'], $user_profile ?? []);
-              if (empty($value)) {
-                $newUnfilledFields[] = $field['field_label'];
-              }
-            }
-          }
-          
-          if (!empty($newUnfilledFields) && ($user_profile && $user_profile['is_complete'])): ?>
+          if ($hasNewRequiredFields): ?>
           <div style="background: #FFF3CD; border: 1px solid #FFC107; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
             <strong style="color: #856404;"><i class="fas fa-exclamation-triangle"></i> New Fields Required</strong>
             <p style="margin: 8px 0 0 0; font-size: 13px; color: #856404;">
@@ -1053,6 +1090,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="hidden" id="inventor_name" name="inventor_name" value="<?php echo htmlspecialchars($draft_data['inventor_name'] ?? ''); ?>">
 
         <script>
+        // Name filter pattern for inventor fields (defined here for early access)
+        const inventorNameFilter = /[^A-Za-zÀ-ÿ\s'\-.,]/g;
+        
         function updateInventorFields() {
           const container = document.getElementById('inventor_fields_container');
           const count = document.getElementById('num_inventors').value;
@@ -1074,15 +1114,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             input.placeholder = `Inventor ${i + 1} Name (e.g., Juan D. Cruz, Jr.)`;
             input.value = currentValues[i] || '';
             input.required = true;
-            input.oninput = combineInventorNames;
             
-            // Apply auto-capitalization if the function exists
-            if (typeof toTitleCase === 'function') {
-               input.addEventListener('input', function() {
-                 this.value = toTitleCase(this.value);
-                 combineInventorNames();
-               });
-            }
+            // Apply name validation (block numbers and special symbols)
+            input.addEventListener('input', function() {
+              const cursorPos = this.selectionStart;
+              const oldValue = this.value;
+              // Filter out invalid characters
+              let newValue = oldValue.replace(inventorNameFilter, '');
+              // Apply proper case
+              newValue = newValue.replace(/\w\S*/g, function(txt) {
+                return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+              });
+              
+              if (oldValue !== newValue) {
+                this.value = newValue;
+                const diff = oldValue.length - newValue.length;
+                this.setSelectionRange(cursorPos - diff, cursorPos - diff);
+                // Visual feedback for blocked input
+                this.style.borderColor = '#dc3545';
+                this.style.animation = 'shake 0.3s ease-in-out';
+                setTimeout(() => {
+                  this.style.borderColor = '';
+                  this.style.animation = '';
+                }, 500);
+              }
+              combineInventorNames();
+            });
+            
+            // Also handle paste events
+            input.addEventListener('paste', function() {
+              setTimeout(() => {
+                const oldValue = this.value;
+                let newValue = oldValue.replace(inventorNameFilter, '');
+                if (oldValue !== newValue) {
+                  this.value = newValue;
+                }
+                combineInventorNames();
+              }, 0);
+            });
             
             div.appendChild(input);
             container.appendChild(div);
@@ -1226,10 +1295,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <i class="fas fa-cloud-upload-alt"></i>
           <p>Click to upload or drag & drop</p>
           <small style="color: #999;">PDF, JPG, PNG, TXT  (Total max 50MB)</small>
-          <!-- Changed to accept multiple files -->
           <input type="file" id="documents" name="documents[]" accept=".pdf,  .jpg,.jpeg,.png,.txt" multiple style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
         </div>
-        <!-- Added file list display outside the upload area -->
         <div class="file-list" id="fileList" style="margin-top: 15px;"></div>
         <div class="total-size" id="totalSize" style="display: none; margin-top: 10px;"></div>
         <input type="hidden" id="removedFiles" name="removed_files" value="">
@@ -1243,35 +1310,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </div>
   
   <script>
-    // Proper Case / Title Case Function
     function toProperCase(str) {
       return str.replace(/\w\S*/g, function(txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
       });
     }
     
-    // Apply Proper Case to input fields
     function applyProperCase(inputId) {
       const input = document.getElementById(inputId);
       if (input) {
         input.addEventListener('blur', function() {
           this.value = toProperCase(this.value);
         });
-        // Also apply on input for real-time feedback (optional, can be removed if too aggressive)
         input.addEventListener('input', function() {
           const cursorPos = this.selectionStart;
           const oldValue = this.value;
           const newValue = toProperCase(oldValue);
           if (oldValue !== newValue) {
             this.value = newValue;
-            // Restore cursor position
             this.setSelectionRange(cursorPos, cursorPos);
           }
         });
       }
     }
     
-    // Apply Proper Case to input fields by name attribute
     function applyProperCaseByName(inputName) {
       const input = document.querySelector(`input[name="${inputName}"]`);
       if (input) {
@@ -1290,6 +1352,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
     
+    // Input validation patterns
+    const validationPatterns = {
+      name: /^[A-Za-zÀ-ÿ\s'\-]*$/,
+      nameFilter: /[^A-Za-zÀ-ÿ\s'\-]/g,
+      phone: /^[\d\s()+\-]*$/,
+      phoneFilter: /[^\d\s()+\-]/g,
+      address: /^[A-Za-z0-9À-ÿ\s.,#\-'\/]*$/,
+      addressFilter: /[^A-Za-z0-9À-ÿ\s.,#\-'\/]/g,
+      employeeId: /^[A-Za-z0-9\-]*$/,
+      employeeIdFilter: /[^A-Za-z0-9\-]/g,
+      postal: /^[0-9]*$/,
+      postalFilter: /[^0-9]/g,
+      nationality: /^[A-Za-zÀ-ÿ\s]*$/,
+      nationalityFilter: /[^A-Za-zÀ-ÿ\s]/g
+    };
+    
+    // Visual feedback for invalid input
+    function showInvalidFeedback(element) {
+      element.style.borderColor = '#dc3545';
+      element.style.animation = 'shake 0.3s ease-in-out';
+      setTimeout(() => {
+        element.style.borderColor = '';
+        element.style.animation = '';
+      }, 500);
+    }
+    
+    // Apply input validation to a field
+    function applyInputValidation(element, filterPattern) {
+      if (!element) return;
+      
+      element.addEventListener('input', function(e) {
+        const cursorPos = this.selectionStart;
+        const oldValue = this.value;
+        const newValue = oldValue.replace(filterPattern, '');
+        
+        if (oldValue !== newValue) {
+          this.value = newValue;
+          // Adjust cursor position
+          const diff = oldValue.length - newValue.length;
+          this.setSelectionRange(cursorPos - diff, cursorPos - diff);
+          showInvalidFeedback(this);
+        }
+      });
+      
+      // Also prevent paste of invalid characters
+      element.addEventListener('paste', function(e) {
+        setTimeout(() => {
+          const oldValue = this.value;
+          const newValue = oldValue.replace(filterPattern, '');
+          if (oldValue !== newValue) {
+            this.value = newValue;
+            showInvalidFeedback(this);
+          }
+        }, 0);
+      });
+    }
+    
+    // Apply validation by input name
+    function applyValidationByName(inputName, filterPattern) {
+      const input = document.querySelector(`input[name="${inputName}"]`);
+      applyInputValidation(input, filterPattern);
+    }
+    
+    // Apply validation to inventor name inputs (dynamically created)
+    function applyInventorNameValidation() {
+      const inventorInputs = document.querySelectorAll('.inventor-input');
+      inventorInputs.forEach(input => {
+        // Remove existing listeners to avoid duplicates
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        
+        applyInputValidation(newInput, validationPatterns.nameFilter);
+        
+        // Re-apply proper case and combine function
+        newInput.addEventListener('input', function() {
+          this.value = toProperCase(this.value);
+          combineInventorNames();
+        });
+      });
+    }
+    
     // Profile section toggle
     function toggleProfileSection() {
       const section = document.getElementById('profileFormSection');
@@ -1303,7 +1446,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
     
-    // Initialize Proper Case on page load
+    // Initialize Proper Case and Input Validation on page load
     document.addEventListener('DOMContentLoaded', function() {
       // Apply to IP Work Title
       applyProperCase('title');
@@ -1311,15 +1454,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       // Apply to Inventor Name
       applyProperCase('inventor_name');
       
-      // Apply to Profile Name fields
+      // Apply to Profile Name fields - Proper Case + Name Validation
       applyProperCaseByName('profile_first_name');
       applyProperCaseByName('profile_middle_name');
       applyProperCaseByName('profile_last_name');
       
-      // Apply to Address fields
+      // Apply NAME validation (letters, spaces, hyphens, apostrophes only)
+      applyValidationByName('profile_first_name', validationPatterns.nameFilter);
+      applyValidationByName('profile_middle_name', validationPatterns.nameFilter);
+      applyValidationByName('profile_last_name', validationPatterns.nameFilter);
+      
+      // Apply PHONE validation (digits and phone formatting only)
+      applyValidationByName('profile_contact_number', validationPatterns.phoneFilter);
+      
+      // Apply ADDRESS validation (alphanumeric and punctuation)
       applyProperCaseByName('profile_address_street');
       applyProperCaseByName('profile_address_barangay');
+      applyValidationByName('profile_address_street', validationPatterns.addressFilter);
+      applyValidationByName('profile_address_barangay', validationPatterns.addressFilter);
+      
+      // Apply EMPLOYEE ID validation (alphanumeric and hyphen only)
+      applyValidationByName('profile_employee_id', validationPatterns.employeeIdFilter);
+      
+      // Apply POSTAL CODE validation (numbers only)
+      applyValidationByName('profile_address_postal', validationPatterns.postalFilter);
+      
+      // Apply NATIONALITY validation (letters and spaces only)
       applyProperCaseByName('profile_nationality');
+      applyValidationByName('profile_nationality', validationPatterns.nationalityFilter);
+      
+      // Apply validation to inventor name fields (dynamically created)
+      // This is called after inventor fields are rendered
+      setTimeout(applyInventorNameValidation, 100);
     });
     
     // City options based on province

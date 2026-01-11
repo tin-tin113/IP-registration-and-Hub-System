@@ -10,7 +10,8 @@ $user_name = $_SESSION['full_name'] ?? 'Admin User';
 
 // Get dashboard stats
 $submitted_count = $conn->query("SELECT COUNT(*) as count FROM ip_applications WHERE status='submitted'")->fetch_assoc()['count'];
-$payment_pending = $conn->query("SELECT COUNT(*) as count FROM ip_applications WHERE status='payment_pending'")->fetch_assoc()['count'];
+// Count both approved office visits (ready to pay) and payment pending (awaiting verification)
+$payment_pending = $conn->query("SELECT COUNT(*) as count FROM ip_applications WHERE status IN ('approved_office_visit', 'payment_pending')")->fetch_assoc()['count'];
 $payment_verified = $conn->query("SELECT COUNT(*) as count FROM ip_applications WHERE status='payment_verified'")->fetch_assoc()['count'];
 $approved_count = $conn->query("SELECT COUNT(*) as count FROM ip_applications WHERE status='approved'")->fetch_assoc()['count'];
 ?>
@@ -418,8 +419,8 @@ $approved_count = $conn->query("SELECT COUNT(*) as count FROM ip_applications WH
             </div>
           </div>
           <p style="font-size: 13px; color: #94A3B8; margin-top: 12px;">
-            <i class="fas fa-arrow-up" style="color: #F59E0B; margin-right: 4px;"></i>
-            <span>Awaiting cashier payment</span>
+            <i class="fas fa-hourglass-half" style="color: #F59E0B; margin-right: 4px;"></i>
+            <span>Ready to pay or awaiting verification</span>
           </p>
         </div>
 

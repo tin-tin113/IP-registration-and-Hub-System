@@ -4,7 +4,7 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'chmsu-IP-system'); // Updated database name to chmsu-IP-system
+define('DB_NAME', 'chmsu-IP-system');
 
 define('BASE_URL', 'http://localhost/chmsu-IP-system/');
 define('PROJECT_NAME', 'CHMSU Intellectual Property Registration and Hub');

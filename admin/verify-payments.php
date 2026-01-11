@@ -63,8 +63,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   }
 }
 
-$result = $conn->query("SELECT a.*, u.full_name, u.email FROM ip_applications a JOIN users u ON a.user_id=u.id WHERE a.status='payment_pending' ORDER BY a.created_at ASC");
-$applications = $result->fetch_all(MYSQLI_ASSOC);
+// Debug: Log how many payment_pending applications exist
+error_log("Verify Payments - Checking for payment_pending applications");
+
+$result = $conn->query("SELECT a.*, u.full_name, u.email FROM ip_applications a JOIN users u ON a.user_id=u.id WHERE a.status='payment_pending' AND a.payment_receipt IS NOT NULL AND a.payment_receipt != '' ORDER BY a.updated_at DESC");
+
+if (!$result) {
+  error_log("Verify Payments - Query error: " . $conn->error);
+  $applications = [];
+} else {
+  $applications = $result->fetch_all(MYSQLI_ASSOC);
+  error_log("Verify Payments - Found " . count($applications) . " applications");
+}
 
 $check_column = $conn->query("SHOW COLUMNS FROM ip_applications LIKE 'payment_rejection_reason'");
 if ($check_column->num_rows === 0) {

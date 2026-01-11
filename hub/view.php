@@ -14,7 +14,7 @@ if (!$work_id) {
 
 // Get IP work details (without view count - will be calculated after tracking)
 $stmt = $conn->prepare("
-  SELECT a.*, u.full_name, u.email, u.department, u.id as owner_id
+  SELECT a.*, u.full_name, u.email, u.department, u.id as owner_id, u.profile_picture
   FROM ip_applications a 
   JOIN users u ON a.user_id = u.id 
   WHERE a.id = ? AND a.status = 'approved' AND a.publish_permission = 'granted'
@@ -570,7 +570,13 @@ if (!empty($work['document_file'])) {
       <a href="browse.php" class="back-btn">
         <i class="fas fa-arrow-left"></i> Back to Hub
       </a>
-      <a href="../dashboard.php" class="back-btn">
+      <?php 
+        $dashboard_url = '../dashboard.php';
+        if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['clerk', 'director'])) {
+            $dashboard_url = '../admin/dashboard.php';
+        }
+      ?>
+      <a href="<?php echo $dashboard_url; ?>" class="back-btn">
         <i class="fas fa-gauge"></i> Dashboard
       </a>
     </div>
@@ -667,7 +673,11 @@ if (!empty($work['document_file'])) {
           </h3>
           <div class="author-card">
             <div class="author-avatar">
-              <?php echo strtoupper(substr($work['full_name'], 0, 1)); ?>
+              <?php if (!empty($work['profile_picture']) && file_exists('../' . $work['profile_picture'])): ?>
+                  <img src="../<?php echo htmlspecialchars($work['profile_picture']); ?>" alt="Author" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+              <?php else: ?>
+                  <?php echo strtoupper(substr($work['full_name'], 0, 1)); ?>
+              <?php endif; ?>
             </div>
             <div class="author-info">
               <h4><?php echo htmlspecialchars($work['full_name']); ?></h4>

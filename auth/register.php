@@ -3,6 +3,17 @@ require_once '../config/config.php';
 require_once '../config/db.php';
 require_once '../config/session.php';
 
+// If already logged in, redirect to appropriate dashboard
+if (isLoggedIn()) {
+  $role = getUserRole();
+  if (in_array($role, ['clerk', 'director'])) {
+    header("Location: " . BASE_URL . "admin/dashboard.php");
+  } else {
+    header("Location: " . BASE_URL . "dashboard.php");
+  }
+  exit;
+}
+
 $error = '';
 $success = '';
 $security_questions = $GLOBALS['security_questions'] ?? [];
@@ -16,8 +27,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $security_answer = strtolower(trim($_POST['security_answer'] ?? ''));
   $department = trim($_POST['department'] ?? '');
   
+  // Email domain validation
+  $email_parts = explode('@', $email);
+  $domain = strtolower(end($email_parts));
+  $allowed_domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
+  // Check if domain is in allowed list or is an educational/government domain
+  $is_valid_domain = in_array($domain, $allowed_domains) || 
+                     substr($domain, -7) === '.edu.ph' || 
+                     substr($domain, -7) === '.gov.ph';
+
   if (empty($email) || empty($password) || empty($full_name) || empty($security_question) || empty($security_answer)) {
     $error = 'All fields are required';
+  } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $error = 'Please enter a valid email address format';
+  } elseif (!$is_valid_domain) {
+    $error = 'Please use a valid email provider (Gmail, Yahoo, Outlook) or an institutional email address';
   } elseif (strlen($password) < 6) {
     $error = 'Password must be at least 6 characters';
   } elseif ($password !== $confirm_password) {
@@ -284,7 +308,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       
       <div class="form-group">
         <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" required placeholder="you@chmsu.edu.ph">
+        <input type="email" id="email" name="email" required placeholder="example@gmail.com or you@chmsu.edu.ph">
       </div>
       
       <div class="form-group">

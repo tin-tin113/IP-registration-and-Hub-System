@@ -3,6 +3,17 @@ require_once '../config/config.php';
 require_once '../config/db.php';
 require_once '../config/session.php';
 
+// If already logged in, redirect to appropriate dashboard
+if (isLoggedIn()) {
+  $role = getUserRole();
+  if (in_array($role, ['clerk', 'director'])) {
+    header("Location: " . BASE_URL . "admin/dashboard.php");
+  } else {
+    header("Location: " . BASE_URL . "dashboard.php");
+  }
+  exit;
+}
+
 $error = '';
 $message = '';
 

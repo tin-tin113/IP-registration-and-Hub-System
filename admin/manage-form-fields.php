@@ -441,7 +441,6 @@ if (file_exists($instructions_file)) {
           <div class="form-group">
             <label>Field Name (Internal)</label>
             <input type="text" name="field_name" placeholder="e.g., emergency_contact_name" pattern="[a-z0-9_]+" title="Lowercase letters, numbers, and underscores only">
-            <small>Leave blank to auto-generate from label</small>
           </div>
           
           <div class="form-group">

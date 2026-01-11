@@ -593,6 +593,8 @@ $applications = $result->fetch_all(MYSQLI_ASSOC);
           </div>
           <?php endif; ?>
           
+
+          
           <form method="POST">
             <input type="hidden" name="app_id" value="<?php echo $app['id']; ?>">
             
@@ -655,5 +657,6 @@ $applications = $result->fetch_all(MYSQLI_ASSOC);
       <?php endforeach; ?>
     <?php endif; ?>
   </div>
+
 </body>
 </html>

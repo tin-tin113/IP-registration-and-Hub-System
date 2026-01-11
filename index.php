@@ -3,9 +3,14 @@ require_once 'config/config.php';
 require_once 'config/db.php';
 require_once 'config/session.php';
 
-// If logged in, redirect to dashboard
+// If logged in, redirect to appropriate dashboard based on role
 if (isLoggedIn()) {
-  header('Location: dashboard.php');
+  $role = getUserRole();
+  if (in_array($role, ['clerk', 'director'])) {
+    header('Location: admin/dashboard.php');
+  } else {
+    header('Location: dashboard.php');
+  }
   exit;
 }
 

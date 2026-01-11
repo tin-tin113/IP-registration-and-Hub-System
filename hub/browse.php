@@ -450,7 +450,13 @@ $works = $result->fetch_all(MYSQLI_ASSOC);
       </a>
       <div class="nav-right">
         <?php if (isLoggedIn()): ?>
-          <a href="../dashboard.php"><i class="fas fa-gauge"></i> Dashboard</a>
+          <?php 
+            $dashboard_url = '../dashboard.php';
+            if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['clerk', 'director'])) {
+                $dashboard_url = '../admin/dashboard.php';
+            }
+          ?>
+          <a href="<?php echo $dashboard_url; ?>"><i class="fas fa-gauge"></i> Dashboard</a>
           <a href="../auth/login.php?logout"><i class="fas fa-arrow-right-from-bracket"></i> Logout</a>
         <?php else: ?>
           <a href="../auth/login.php"><i class="fas fa-arrow-right-to-bracket"></i> Sign In</a>

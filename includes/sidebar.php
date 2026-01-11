@@ -395,7 +395,7 @@ $user_email = $_SESSION['email'] ?? '';
           </a>
           <a href="<?php echo $base_path; ?>profile/badges-certificates.php" <?php echo ($current_page === 'badges-certificates.php') ? 'class="active"' : ''; ?>>
             <i class="fas fa-medal"></i>
-            <span>Badges & Certificates</span>
+            <span>My Profile</span>
           </a>
           <a href="<?php echo $base_path; ?>help.php" <?php echo ($current_page === 'help.php') ? 'class="active"' : ''; ?>>
             <i class="fas fa-circle-question"></i>
@@ -424,6 +424,10 @@ $user_email = $_SESSION['email'] ?? '';
           <a href="<?php echo $base_path; ?>admin/dashboard.php" <?php echo ($current_page === 'admin/dashboard.php') ? 'class="active"' : ''; ?>>
             <i class="fas fa-gauge"></i>
             <span>Overview</span>
+          </a>
+          <a href="<?php echo $base_path; ?>hub/browse.php" <?php echo ($current_page === 'browse.php') ? 'class="active"' : ''; ?>>
+            <i class="fas fa-magnifying-glass"></i>
+            <span>Browse IP Hub</span>
           </a>
         </div>
       </div>

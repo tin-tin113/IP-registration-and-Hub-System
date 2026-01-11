@@ -376,10 +376,14 @@ $logs = $result->fetch_all(MYSQLI_ASSOC);
           <div class="detail-value" id="modalAction"></div>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
           <div class="detail-group">
             <div class="detail-label">User</div>
             <div class="detail-value" id="modalUser"></div>
+          </div>
+          <div class="detail-group">
+            <div class="detail-label">IP Address</div>
+            <div class="detail-value" id="modalIp"></div>
           </div>
           <div class="detail-group">
             <div class="detail-label">Timestamp</div>
@@ -446,6 +450,7 @@ $logs = $result->fetch_all(MYSQLI_ASSOC);
     function showDetails(log) {
       document.getElementById('modalAction').textContent = log.action;
       document.getElementById('modalUser').textContent = log.full_name || 'System';
+      document.getElementById('modalIp').textContent = log.ip_address || 'N/A';
       document.getElementById('modalTime').textContent = log.timestamp;
       document.getElementById('modalEntity').textContent = log.entity_type || 'N/A';
       document.getElementById('modalEntityId').textContent = log.entity_id || 'N/A';

@@ -15,22 +15,29 @@ if (!$app_id) {
   exit;
 }
 
-// Verify application belongs to user and is in office_visit status (or payment_pending with rejection)
-$stmt = $conn->prepare("SELECT * FROM ip_applications WHERE id = ? AND user_id = ? AND (status = 'office_visit' OR (status = 'payment_pending' AND payment_rejection_reason IS NOT NULL))");
+// First, verify application belongs to user (without status restriction for POST)
+$stmt = $conn->prepare("SELECT * FROM ip_applications WHERE id = ? AND user_id = ?");
 $stmt->bind_param("ii", $app_id, $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-  header("Location: my-applications.php?error=Application not found or not ready for payment");
+  header("Location: my-applications.php?error=Application not found");
   exit;
 }
 
 $app = $result->fetch_assoc();
 $stmt->close();
 
-// Get payment amount (use stored amount or default)
-$payment_amount = !empty($app['payment_amount']) ? $app['payment_amount'] : IP_REGISTRATION_FEE;
+// Check if application is in a valid status for payment upload
+$valid_statuses = ['office_visit', 'payment_pending'];
+if (!in_array($app['status'], $valid_statuses)) {
+  // Allow resubmission if payment was rejected (has rejection reason)
+  if ($app['status'] !== 'payment_pending' || empty($app['payment_rejection_reason'])) {
+    header("Location: my-applications.php?error=Application not ready for payment upload");
+    exit;
+  }
+}
 
 // Handle payment upload
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -41,41 +48,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!in_array($ext, ALLOWED_EXTENSIONS)) {
       $error = 'Invalid file type. Allowed: ' . implode(', ', ALLOWED_EXTENSIONS);
     } elseif ($file['size'] > MAX_FILE_SIZE) {
-      $error = 'File too large. Max: 20MB';
+      $error = 'File too large. Max: 50MB';
     } else {
       $target_dir = UPLOAD_DIR . 'receipts/';
       if (!is_dir($target_dir)) {
         mkdir($target_dir, 0755, true);
       }
       
-      $filename = 'payment_' . time() . '_' . uniqid() . '.' . $ext;
+      $filename = 'payment_' . $app_id . '_' . time() . '_' . uniqid() . '.' . $ext;
       $filepath = $target_dir . $filename;
       
       if (move_uploaded_file($file['tmp_name'], $filepath)) {
-        // Update application with payment receipt and clear rejection reason
-        // Store relative path (e.g., 'receipts/filename.ext')
         $receipt_db_path = 'receipts/' . $filename;
-        $stmt = $conn->prepare("UPDATE ip_applications SET payment_receipt=?, status='payment_pending', payment_rejection_reason=NULL WHERE id=?");
-        $stmt->bind_param("si", $receipt_db_path, $app_id);
         
-        if ($stmt->execute()) {
-          auditLog('Upload Payment Receipt', 'Application', $app_id);
-          $success = 'Payment receipt uploaded successfully! Awaiting clerk verification.';
-          header("Location: my-applications.php?success=payment_uploaded");
-          exit;
-        } else {
-          $error = 'Failed to update application';
+        // Use a transaction to ensure data consistency
+        $conn->begin_transaction();
+        
+        try {
+          $stmt = $conn->prepare("UPDATE ip_applications SET payment_receipt=?, status='payment_pending', payment_rejection_reason=NULL, updated_at=NOW() WHERE id=? AND user_id=?");
+          $stmt->bind_param("sii", $receipt_db_path, $app_id, $user_id);
+          $stmt->execute();
+          
+          if ($stmt->affected_rows >= 0) { // >= 0 because 0 means no change but still valid
+            $conn->commit();
+            auditLog('Upload Payment Receipt', 'Application', $app_id);
+            header("Location: my-applications.php?success=Payment receipt uploaded successfully. Waiting for clerk verification.", true, 303);
+            exit;
+          } else {
+            throw new Exception('Database update failed');
+          }
+        } catch (Exception $e) {
+          $conn->rollback();
+          error_log("Payment upload error: " . $e->getMessage());
+          $error = 'Failed to save payment receipt. Please try again.';
+          if (file_exists($filepath)) {
+            unlink($filepath);
+          }
         }
         
         $stmt->close();
       } else {
-        $error = 'Failed to upload file';
+        $error = 'Failed to upload file. Please try again.';
       }
     }
   } else {
     $error = 'Please select a file to upload';
   }
+  
+  // Refresh application data after POST
+  $stmt = $conn->prepare("SELECT * FROM ip_applications WHERE id = ? AND user_id = ?");
+  $stmt->bind_param("ii", $app_id, $user_id);
+  $stmt->execute();
+  $app = $stmt->get_result()->fetch_assoc();
+  $stmt->close();
 }
+
+// Get payment amount
+$payment_amount = !empty($app['payment_amount']) ? $app['payment_amount'] : IP_REGISTRATION_FEE;
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
