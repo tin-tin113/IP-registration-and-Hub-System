@@ -304,12 +304,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="POST">
       <div class="form-group">
         <label for="full_name">Full Name</label>
-        <input type="text" id="full_name" name="full_name" required placeholder="Juan Dela Cruz" maxlength="100">
+        <input type="text" id="full_name" name="full_name" required placeholder="Juan Dela Cruz" maxlength="100" value="<?php echo htmlspecialchars($_POST['full_name'] ?? ''); ?>">
       </div>
       
       <div class="form-group">
         <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" required placeholder="example@gmail.com or you@chmsu.edu.ph" maxlength="100">
+        <input type="email" id="email" name="email" required placeholder="example@gmail.com or you@chmsu.edu.ph" maxlength="100" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
       </div>
       
       <div class="form-group">
@@ -333,42 +333,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   'Graduate School'
               ];
           }
-          foreach ($dept_options as $opt): ?>
-            <option value="<?php echo htmlspecialchars($opt); ?>"><?php echo htmlspecialchars($opt); ?></option>
+          foreach ($dept_options as $opt): 
+            $selected = (isset($_POST['department']) && $_POST['department'] === $opt) ? 'selected' : '';
+          ?>
+            <option value="<?php echo htmlspecialchars($opt); ?>" <?php echo $selected; ?>><?php echo htmlspecialchars($opt); ?></option>
           <?php endforeach; ?>
-          <option value="Other">Other (Specify)</option>
+          <option value="Other" <?php echo (isset($_POST['department']) && $_POST['department'] === 'Other') ? 'selected' : ''; ?>>Other (Specify)</option>
         </select>
       </div>
 
-      <div class="form-group" id="other_department_group" style="display:none;">
+      <div class="form-group" id="other_department_group" style="display:<?php echo (isset($_POST['department']) && $_POST['department'] === 'Other') ? 'block' : 'none'; ?>;">
         <label for="other_department">Specify Department</label>
-        <input type="text" id="other_department" name="other_department" placeholder="Enter department name" maxlength="100">
+        <input type="text" id="other_department" name="other_department" placeholder="Enter department name" maxlength="100" value="<?php echo htmlspecialchars($_POST['other_department'] ?? ''); ?>">
       </div>
 
       
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" id="password" name="password" required placeholder="At least 6 characters" maxlength="100">
+        <div style="position: relative; display: flex; align-items: center;">
+          <input type="password" id="password" name="password" required placeholder="At least 6 characters" maxlength="100" style="padding-right: 40px; width: 100%;">
+          <button type="button" onclick="togglePassword('password', this)" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: #64748B; padding: 0; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;" title="Show password">
+            <i class="fas fa-eye" style="font-size: 14px;"></i>
+          </button>
+        </div>
       </div>
       
       <div class="form-group">
         <label for="confirm_password">Confirm Password</label>
-        <input type="password" id="confirm_password" name="confirm_password" required placeholder="Re-enter password" maxlength="100">
+        <div style="position: relative; display: flex; align-items: center;">
+          <input type="password" id="confirm_password" name="confirm_password" required placeholder="Re-enter password" maxlength="100" style="padding-right: 40px; width: 100%;">
+          <button type="button" onclick="togglePassword('confirm_password', this)" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: #64748B; padding: 0; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;" title="Show password">
+            <i class="fas fa-eye" style="font-size: 14px;"></i>
+          </button>
+        </div>
       </div>
       
       <div class="form-group">
         <label for="security_question">Security Question</label>
         <select id="security_question" name="security_question" required>
           <option value="">Select a question</option>
-          <?php foreach ($security_questions as $q): ?>
-            <option value="<?php echo htmlspecialchars($q); ?>"><?php echo htmlspecialchars($q); ?></option>
+          <?php foreach ($security_questions as $q): 
+            $selected = (isset($_POST['security_question']) && $_POST['security_question'] === $q) ? 'selected' : '';
+          ?>
+            <option value="<?php echo htmlspecialchars($q); ?>" <?php echo $selected; ?>><?php echo htmlspecialchars($q); ?></option>
           <?php endforeach; ?>
         </select>
       </div>
       
       <div class="form-group">
         <label for="security_answer">Answer</label>
-        <input type="text" id="security_answer" name="security_answer" placeholder="Your answer (case-insensitive)" required maxlength="100">
+        <input type="text" id="security_answer" name="security_answer" placeholder="Your answer (case-insensitive)" required maxlength="100" value="<?php echo htmlspecialchars($_POST['security_answer'] ?? ''); ?>">
       </div>
       
       <button type="submit">Create Account</button>
@@ -381,6 +395,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </body>
 
 <script>
+// Toggle password visibility
+function togglePassword(inputId, button) {
+  const input = document.getElementById(inputId);
+  const icon = button.querySelector('i');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+    button.title = 'Hide password';
+  } else {
+    input.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+    button.title = 'Show password';
+  }
+}
+
 document.getElementById('department').addEventListener('change', function () {
   const otherGroup = document.getElementById('other_department_group');
 

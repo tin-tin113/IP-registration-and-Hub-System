@@ -97,9 +97,9 @@ try {
     $user_profile = null;
 }
 
-// Get user email for pre-filling
+// Get user email, full_name, and department for pre-filling
 try {
-    $user_stmt = $conn->prepare("SELECT email, full_name FROM users WHERE id = ?");
+    $user_stmt = $conn->prepare("SELECT email, full_name, department FROM users WHERE id = ?");
     if (!$user_stmt) {
         throw new Exception("Failed to prepare user statement: " . $conn->error);
     }
@@ -109,7 +109,7 @@ try {
     $user_stmt->close();
 } catch (Exception $e) {
     logApplicationError('Failed to fetch user data', ['user_id' => $user_id, 'error' => $e->getMessage()]);
-    $user_data = ['email' => '', 'full_name' => ''];
+    $user_data = ['email' => '', 'full_name' => '', 'department' => ''];
 }
 
 // If ID provided, check if it's a valid draft or rejected application for this user
@@ -1046,6 +1046,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               // Special handling for email - fallback to user_data
               if ($field['field_name'] === 'email' && empty($fieldValue)) {
                 $fieldValue = $user_data['email'] ?? '';
+              }
+              // Special handling for college - use registered department and make read-only
+              if ($field['field_name'] === 'college') {
+                $fieldValue = $user_data['department'] ?? '';
               }
               // Default value for nationality
               if ($field['field_name'] === 'nationality' && empty($fieldValue)) {
