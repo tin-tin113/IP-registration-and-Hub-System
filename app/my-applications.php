@@ -489,6 +489,9 @@ $upload_success = $_GET['success'] ?? '';
               <div class="app-actions">
                 <?php if ($app['status'] === 'draft'): ?>
                   <a href="apply.php?id=<?php echo $app['id']; ?>" class="btn-small" style="background: #f0f4ff; color: #667eea; border-color: #667eea;"><i class="fas fa-pen"></i> Continue</a>
+                <?php elseif ($app['status'] === 'rejected'): ?>
+                  <a href="view-application.php?id=<?php echo $app['id']; ?>" class="btn-small"><i class="fas fa-eye"></i> View</a>
+                  <a href="apply.php?id=<?php echo $app['id']; ?>&resubmit=1" class="btn-small" style="background: #E07D32; color: white; border-color: #E07D32;"><i class="fas fa-redo"></i> Edit & Resubmit</a>
                 <?php else: ?>
                   <a href="view-application.php?id=<?php echo $app['id']; ?>" class="btn-small"><i class="fas fa-eye"></i> View</a>
                 <?php endif; ?>

@@ -349,6 +349,46 @@ if ($check_column->num_rows === 0) {
         gap: 8px;
       }
     }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background: white;
+      padding: 32px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 480px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      animation: modalSlide 0.3s ease-out;
+    }
+    
+    @keyframes modalSlide {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .modal-icon {
+      font-size: 48px;
+      color: #10B981;
+      margin-bottom: 20px;
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+    }
   </style>
 </head>
 <body>
@@ -428,6 +468,7 @@ if ($check_column->num_rows === 0) {
           
           <form method="POST" id="verifyForm_<?php echo $app['id']; ?>">
             <input type="hidden" name="app_id" value="<?php echo $app['id']; ?>">
+            <input type="hidden" name="action" value="verify_payment">
             
             <div class="form-group">
               <label for="payment_amount_<?php echo $app['id']; ?>">Payment Amount (₱) *</label>
@@ -436,7 +477,7 @@ if ($check_column->num_rows === 0) {
             </div>
             
             <div class="button-group">
-              <button type="submit" name="action" value="verify_payment">
+              <button type="button" onclick="showVerifyModal(<?php echo $app['id']; ?>)">
                 <i class="fas fa-check"></i> Verify Payment & Forward to Director
               </button>
               
@@ -469,5 +510,52 @@ if ($check_column->num_rows === 0) {
       <?php endforeach; ?>
     <?php endif; ?>
   </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="verifyModal">
+    <div class="modal-content">
+      <div class="modal-icon">
+        <i class="fas fa-credit-card"></i>
+      </div>
+      <h2 style="margin-bottom: 10px; color: #1E293B;">Confirm Payment Verification</h2>
+      <p style="color: #64748B; margin-bottom: 20px;">Are you sure you want to verify this payment and forward the application to the Director?</p>
+      
+      <div class="modal-actions">
+        <button type="button" style="background: #E2E8F0; color: #475569;" onclick="closeModal()">
+          Cancel
+        </button>
+        <button type="button" style="background: linear-gradient(135deg, #0A4D2E 0%, #1B5C3B 100%); color: white;" onclick="confirmVerify()">
+          Yes, Verify Payment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentAppId = null;
+
+    function showVerifyModal(appId) {
+      currentAppId = appId;
+      document.getElementById('verifyModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('verifyModal').style.display = 'none';
+      currentAppId = null;
+    }
+
+    function confirmVerify() {
+      if (currentAppId) {
+        document.getElementById('verifyForm_' + currentAppId).submit();
+      }
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('verifyModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+  </script>
 </body>
 </html>

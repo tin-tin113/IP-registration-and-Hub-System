@@ -363,6 +363,20 @@ if (!empty($app['document_file'])) {
           </a>
         </div>
       <?php endif; ?>
+      
+      <?php if ($app['status'] === 'rejected'): ?>
+        <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #E07D32 0%, #D35400 100%); border-radius: 8px; text-align: center;">
+          <h3 style="color: white; margin-bottom: 15px; font-size: 18px;">
+            <i class="fas fa-redo"></i> Resubmit Application
+          </h3>
+          <p style="color: rgba(255,255,255,0.9); margin-bottom: 15px; font-size: 14px;">
+            Your application was rejected. You can edit and resubmit it for review.
+          </p>
+          <a href="apply.php?id=<?php echo $app['id']; ?>&resubmit=1" style="display: inline-block; background: white; color: #E07D32; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-weight: 600; font-size: 14px; transition: transform 0.2s;">
+            <i class="fas fa-pen"></i> Edit & Resubmit
+          </a>
+        </div>
+      <?php endif; ?>
     </div>
   </div>
 </body>

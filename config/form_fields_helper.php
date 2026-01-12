@@ -160,7 +160,8 @@ function renderFormField($field, $value = '', $extraAttrs = []) {
             break;
             
         case 'textarea':
-            $html = '<textarea name="' . $name . '" id="' . $id . '" placeholder="' . $placeholder . '" ' . $required . '>' . htmlspecialchars($value) . '</textarea>';
+            $maxLen = 'maxlength="500"'; // Default max for textareas
+            $html = '<textarea name="' . $name . '" id="' . $id . '" placeholder="' . $placeholder . '" ' . $required . ' ' . $maxLen . '>' . htmlspecialchars($value) . '</textarea>';
             break;
             
         case 'date':
@@ -173,7 +174,46 @@ function renderFormField($field, $value = '', $extraAttrs = []) {
             
         default: // text, email, tel, number
             $type = in_array($field['field_type'], ['email', 'tel', 'number']) ? $field['field_type'] : 'text';
-            $html = '<input type="' . $type . '" name="' . $name . '" id="' . $id . '" value="' . htmlspecialchars($value) . '" placeholder="' . $placeholder . '" ' . $pattern . ' ' . $required . '>';
+            
+            // Override employee_id to be number
+            if ($field['field_name'] === 'employee_id') {
+                $type = 'number';
+            }
+            
+            // Define max lengths for specific fields
+            $maxLengths = [
+                'first_name' => 50,
+                'middle_name' => 50, 
+                'last_name' => 50,
+                'suffix' => 10,
+                'contact_number' => 15,
+                'employee_id' => 30, // Max 30 digits
+                'address_street' => 150,
+                'address_barangay' => 100,
+                'address_postal' => 6,
+                'nationality' => 50,
+                'college' => 100,
+                'email' => 100
+            ];
+            
+            $maxLen = '';
+            if (isset($maxLengths[$field['field_name']])) {
+                $maxLen = 'maxlength="' . $maxLengths[$field['field_name']] . '"';
+            } elseif ($type === 'text') {
+                $maxLen = 'maxlength="100"';
+            }
+            
+            // Special handling for number types (including the overridden employee_id)
+            if ($type === 'number') {
+                // If max length wasn't set by specific map, default to 10
+                if (empty($maxLen)) {
+                    $maxLen = 'maxlength="10"';
+                }
+                // Add oninput to strictly enforce length and numeric content
+                $maxLen .= ' oninput="if(this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength); this.value = this.value.replace(/[^0-9]/g, \'\');"';
+            }
+            
+            $html = '<input type="' . $type . '" name="' . $name . '" id="' . $id . '" value="' . htmlspecialchars($value) . '" placeholder="' . $placeholder . '" ' . $pattern . ' ' . $required . ' ' . $maxLen . '>';
             break;
     }
     
@@ -299,4 +339,24 @@ function saveFormFieldValues($conn, $userId, $postData) {
     $stmt->close();
     
     return $success;
+}
+
+/**
+ * Get options for a specific form field (e.g. dropdown values)
+ * @param mysqli $conn Database connection
+ * @param string $fieldName The field name (e.g. 'college')
+ * @return array Array of options
+ */
+function getFormFieldOptions($conn, $fieldName) {
+    initFormFieldsTable($conn);
+    $stmt = $conn->prepare("SELECT field_options FROM form_fields WHERE field_name = ?");
+    $stmt->bind_param("s", $fieldName);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        if (!empty($row['field_options'])) {
+            return json_decode($row['field_options'], true) ?? [];
+        }
+    }
+    return [];
 }

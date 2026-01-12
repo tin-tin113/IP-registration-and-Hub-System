@@ -379,13 +379,13 @@ if (file_exists($instructions_file)) {
     <div class="section-card" style="border-left: 4px solid #DAA520; margin-top: 32px;">
       <div class="section-title" style="color: #1B7F4D;">
         <i class="fas fa-clipboard-list"></i>
-        Requirements & Instructions
+        System Instructions & Requirements
         <span style="font-size: 12px; font-weight: normal; color: #666; margin-left: 10px;">
-          (Shown on the Apply page)
+          (Application Form & Payment Page)
         </span>
       </div>
       <p style="font-size: 13px; color: #666; margin-bottom: 16px;">
-        <i class="fas fa-info-circle"></i> Edit the instructions and requirements shown to applicants on the application form.
+        <i class="fas fa-info-circle"></i> Edit the instructions and requirements shown to applicants on the Application Form and Payment Upload Page.
       </p>
       
       <div class="field-list">

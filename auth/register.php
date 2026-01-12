@@ -2,6 +2,7 @@
 require_once '../config/config.php';
 require_once '../config/db.php';
 require_once '../config/session.php';
+require_once '../config/form_fields_helper.php';
 
 // If already logged in, redirect to appropriate dashboard
 if (isLoggedIn()) {
@@ -303,43 +304,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="POST">
       <div class="form-group">
         <label for="full_name">Full Name</label>
-        <input type="text" id="full_name" name="full_name" required placeholder="Juan Dela Cruz">
+        <input type="text" id="full_name" name="full_name" required placeholder="Juan Dela Cruz" maxlength="100">
       </div>
       
       <div class="form-group">
         <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" required placeholder="example@gmail.com or you@chmsu.edu.ph">
+        <input type="email" id="email" name="email" required placeholder="example@gmail.com or you@chmsu.edu.ph" maxlength="100">
       </div>
       
       <div class="form-group">
         <label for="department">Department/Faculty</label>
         <select id="department" name="department" required>
           <option value="">Select Department</option>
-          <option value="College of Arts and Sciences">College of Arts and Sciences</option>
-          <option value="College of Engineering">College of Engineering</option>
-          <option value="College of Business and Management">College of Business and Management</option>
-          <option value="College of Education">College of Education</option>
-          <option value="College of Criminal Justice Education">College of Criminal Justice Education</option>
-          <option value="College of Industrial Technology">College of Industrial Technology</option>
-          <option value="Graduate School">Graduate School</option>
+          <?php 
+          // Fetch dynamic options from Form Builder (field: college)
+          $dept_options = getFormFieldOptions($conn, 'college');
+          // Fallback if empty
+          if (empty($dept_options)) {
+              $dept_options = [
+                  'College of Arts and Sciences',
+                  'College of Business and Accountancy', 
+                  'College of Criminal Justice Education',
+                  'College of Education',
+                  'College of Engineering and Technology',
+                  'College of Fisheries',
+                  'College of Industrial Technology',
+                  'College of Nursing',
+                  'Graduate School'
+              ];
+          }
+          foreach ($dept_options as $opt): ?>
+            <option value="<?php echo htmlspecialchars($opt); ?>"><?php echo htmlspecialchars($opt); ?></option>
+          <?php endforeach; ?>
           <option value="Other">Other (Specify)</option>
         </select>
       </div>
 
       <div class="form-group" id="other_department_group" style="display:none;">
         <label for="other_department">Specify Department</label>
-        <input type="text" id="other_department" name="other_department" placeholder="Enter department name">
+        <input type="text" id="other_department" name="other_department" placeholder="Enter department name" maxlength="100">
       </div>
 
       
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" id="password" name="password" required placeholder="At least 6 characters">
+        <input type="password" id="password" name="password" required placeholder="At least 6 characters" maxlength="100">
       </div>
       
       <div class="form-group">
         <label for="confirm_password">Confirm Password</label>
-        <input type="password" id="confirm_password" name="confirm_password" required placeholder="Re-enter password">
+        <input type="password" id="confirm_password" name="confirm_password" required placeholder="Re-enter password" maxlength="100">
       </div>
       
       <div class="form-group">
@@ -354,7 +368,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       
       <div class="form-group">
         <label for="security_answer">Answer</label>
-        <input type="text" id="security_answer" name="security_answer" placeholder="Your answer (case-insensitive)" required>
+        <input type="text" id="security_answer" name="security_answer" placeholder="Your answer (case-insensitive)" required maxlength="100">
       </div>
       
       <button type="submit">Create Account</button>

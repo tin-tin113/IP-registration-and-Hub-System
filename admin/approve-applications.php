@@ -21,7 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $stmt->bind_param("sssssi", $certificate_number, $reference_number, $director_feedback, $approved_at, $approved_at, $app_id);
     
     if ($stmt->execute()) {
-      $stmt2 = $conn->prepare("INSERT INTO certificates (application_id, certificate_number, reference_number) VALUES (?, ?, ?)");
+      // Use ON DUPLICATE KEY UPDATE to prevent fatal errors if certificate already exists
+      $stmt2 = $conn->prepare("INSERT INTO certificates (application_id, certificate_number, reference_number) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE certificate_number=VALUES(certificate_number), reference_number=VALUES(reference_number)");
       $stmt2->bind_param("iss", $app_id, $certificate_number, $reference_number);
       $stmt2->execute();
       $stmt2->close();

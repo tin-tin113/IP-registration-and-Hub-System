@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CHMSU IP System - Technical Reference Document</title>
+    <style>
+        @page {
+            margin: 1in;
+            size: A4;
+        }
+
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #000;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 1in;
+        }
+
+        h1 {
+            font-size: 24pt;
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 16pt;
+            border-bottom: 1px solid #666;
+            margin-top: 30px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-size: 14pt;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 11pt;
+        }
+
+        th,
+        td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            font-size: 9pt;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+        }
+
+        .title-page {
+            text-align: center;
+            page-break-after: always;
+            padding-top: 2in;
+        }
+
+        .title-page h1 {
+            font-size: 28pt;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        .title-page .subtitle {
+            font-size: 18pt;
+            margin: 20px 0;
+        }
+
+        .title-page .info {
+            margin-top: 60px;
+            font-size: 14pt;
+        }
+
+        .toc {
+            page-break-after: always;
+        }
+
+        .toc h2 {
+            text-align: center;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin: 8px 0;
+        }
+
+        .toc a {
+            text-decoration: none;
+            color: #000;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="title-page">
+        <h1>CHMSU Intellectual Property Registration and Hub System</h1>
+        <div class="subtitle">Technical Reference Document for Final Defense</div>
+        <div class="info">
+            <p><strong>Document Version:</strong> 1.0</p>
+            <p><strong>Date:</strong> January 12, 2026</p>
+            <p><strong>Institution:</strong> Carlos Hilado Memorial State University</p>
+            <p><strong>College:</strong> College of Engineering and Technology</p>
+        </div>
+    </div>
+
+    <div class="toc">
+        <h2>Table of Contents</h2>
+        <ul>
+            <li>1. Executive Summary</li>
+            <li>2. System Overview</li>
+            <li>3. Technology Stack</li>
+            <li>4. Database Schema</li>
+            <li>5. User Roles and Access Control</li>
+            <li>6. Application Workflow</li>
+            <li>7. File Structure</li>
+            <li>8. Key Features</li>
+            <li>9. Security Implementation</li>
+            <li>10. Deployment Requirements</li>
+        </ul>
+    </div>
+
+    <h2>1. Executive Summary</h2>
+    <p>The <strong>CHMSU IP Registration and Hub System</strong> is a web-based application that digitizes intellectual
+        property management at Carlos Hilado Memorial State University. It provides online submission, multi-stage
+        verification, automated certificate generation, and a public IP Hub.</p>
+
+    <h2>2. System Overview</h2>
+    <h3>2.1 System Modules</h3>
+    <table>
+        <tr>
+            <th>Module</th>
+            <th>Description</th>
+            <th>Primary Users</th>
+        </tr>
+        <tr>
+            <td>IP Registration Portal</td>
+            <td>Online submission of Copyright, Patent, Trademark</td>
+            <td>Users</td>
+        </tr>
+        <tr>
+            <td>Verification Dashboard</td>
+            <td>Document and payment verification</td>
+            <td>Clerks, Directors</td>
+        </tr>
+        <tr>
+            <td>Approval System</td>
+            <td>Final approval with certificate generation</td>
+            <td>Directors</td>
+        </tr>
+        <tr>
+            <td>IP Hub Repository</td>
+            <td>Public showcase of approved IP works</td>
+            <td>Public</td>
+        </tr>
+        <tr>
+            <td>Analytics Dashboard</td>
+            <td>System-wide statistics</td>
+            <td>Directors</td>
+        </tr>
+    </table>
+
+    <h2>3. Technology Stack</h2>
+    <table>
+        <tr>
+            <th>Component</th>
+            <th>Technology</th>
+            <th>Purpose</th>
+        </tr>
+        <tr>
+            <td>Backend</td>
+            <td>PHP 7.4+</td>
+            <td>Server-side logic</td>
+        </tr>
+        <tr>
+            <td>Database</td>
+            <td>MySQL 5.7+</td>
+            <td>Data storage</td>
+        </tr>
+        <tr>
+            <td>Web Server</td>
+            <td>Apache (XAMPP)</td>
+            <td>HTTP handling</td>
+        </tr>
+        <tr>
+            <td>Frontend</td>
+            <td>HTML5, CSS3, JavaScript</td>
+            <td>User interface</td>
+        </tr>
+        <tr>
+            <td>Charts</td>
+            <td>Chart.js (Local)</td>
+            <td>Data visualization</td>
+        </tr>
+    </table>
+
+    <h2>4. Database Schema</h2>
+    <h3>4.1 Database Tables (10 Total)</h3>
+    <table>
+        <tr>
+            <th>Table</th>
+            <th>Purpose</th>
+            <th>Key Columns</th>
+        </tr>
+        <tr>
+            <td>users</td>
+            <td>Authentication</td>
+            <td>id, email, password, role</td>
+        </tr>
+        <tr>
+            <td>user_profiles</td>
+            <td>Verification data</td>
+            <td>user_id, first_name, college</td>
+        </tr>
+        <tr>
+            <td>ip_applications</td>
+            <td>IP submissions</td>
+            <td>title, ip_type, status, certificate_id</td>
+        </tr>
+        <tr>
+            <td>certificates</td>
+            <td>Certificate records</td>
+            <td>certificate_number, reference_number</td>
+        </tr>
+        <tr>
+            <td>badges</td>
+            <td>User achievements</td>
+            <td>badge_type, views_required</td>
+        </tr>
+        <tr>
+            <td>badge_thresholds</td>
+            <td>Badge rules</td>
+            <td>views_required, points_awarded</td>
+        </tr>
+        <tr>
+            <td>view_tracking</td>
+            <td>Hub analytics</td>
+            <td>application_id, viewer_id</td>
+        </tr>
+        <tr>
+            <td>form_fields</td>
+            <td>Dynamic forms</td>
+            <td>field_name, field_type, is_active</td>
+        </tr>
+        <tr>
+            <td>audit_log</td>
+            <td>Activity trail</td>
+            <td>action, entity_type, timestamp</td>
+        </tr>
+        <tr>
+            <td>certificate_template_settings</td>
+            <td>Template config</td>
+            <td>setting_key, setting_value</td>
+        </tr>
+    </table>
+
+    <h3>4.2 Application Status Flow</h3>
+    <table>
+        <tr>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Next Status</th>
+        </tr>
+        <tr>
+            <td>draft</td>
+            <td>Saved but not submitted</td>
+            <td>submitted</td>
+        </tr>
+        <tr>
+            <td>submitted</td>
+            <td>Awaiting clerk review</td>
+            <td>office_visit</td>
+        </tr>
+        <tr>
+            <td>office_visit</td>
+            <td>Verified, awaiting payment</td>
+            <td>payment_pending</td>
+        </tr>
+        <tr>
+            <td>payment_pending</td>
+            <td>Receipt uploaded</td>
+            <td>payment_verified</td>
+        </tr>
+        <tr>
+            <td>payment_verified</td>
+            <td>Awaiting director</td>
+            <td>approved</td>
+        </tr>
+        <tr>
+            <td>approved</td>
+            <td>Certificate generated</td>
+            <td>Final</td>
+        </tr>
+    </table>
+
+    <h2>5. User Roles and Access Control</h2>
+    <table>
+        <tr>
+            <th>Feature</th>
+            <th>User</th>
+            <th>Clerk</th>
+            <th>Director</th>
+        </tr>
+        <tr>
+            <td>Submit IP Application</td>
+            <td>✓</td>
+            <td>✗</td>
+            <td>✗</td>
+        </tr>
+        <tr>
+            <td>Verify Documents</td>
+            <td>✗</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr>
+            <td>Verify Payments</td>
+            <td>✗</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr>
+            <td>Approve Applications</td>
+            <td>✗</td>
+            <td>✗</td>
+            <td>✓</td>
+        </tr>
+        <tr>
+            <td>View Analytics</td>
+            <td>✗</td>
+            <td>✗</td>
+            <td>✓</td>
+        </tr>
+        <tr>
+            <td>Manage Users</td>
+            <td>✗</td>
+            <td>✗</td>
+            <td>✓</td>
+        </tr>
+    </table>
+
+    <h2>6. Application Workflow</h2>
+    <p><strong>User Flow:</strong> Register → Complete Profile → Submit Application → Upload Payment → Download
+        Certificate</p>
+    <p><strong>Clerk Flow:</strong> Review Documents → Verify Payment</p>
+    <p><strong>Director Flow:</strong> Final Approval → Certificate Generated</p>
+
+    <h2>7. File Structure</h2>
+    <table>
+        <tr>
+            <th>Directory</th>
+            <th>Purpose</th>
+            <th>Key Files</th>
+        </tr>
+        <tr>
+            <td>/admin</td>
+            <td>Administrative functions</td>
+            <td>analytics.php, approve-applications.php, verify-*.php</td>
+        </tr>
+        <tr>
+            <td>/app</td>
+            <td>User application pages</td>
+            <td>apply.php, my-applications.php, view-certificate.php</td>
+        </tr>
+        <tr>
+            <td>/auth</td>
+            <td>Authentication</td>
+            <td>login.php, register.php</td>
+        </tr>
+        <tr>
+            <td>/config</td>
+            <td>System configuration</td>
+            <td>config.php, db.php, session.php</td>
+        </tr>
+        <tr>
+            <td>/hub</td>
+            <td>Public IP Hub</td>
+            <td>browse.php, view.php</td>
+        </tr>
+        <tr>
+            <td>/includes</td>
+            <td>Reusable components</td>
+            <td>sidebar.php, header.php</td>
+        </tr>
+        <tr>
+            <td>/uploads</td>
+            <td>User file uploads</td>
+            <td>copyright/, patent/, trademark/, receipts/</td>
+        </tr>
+    </table>
+
+    <h2>8. Key Features</h2>
+    <table>
+        <tr>
+            <th>Feature</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>Multi-type IP Support</td>
+            <td>Copyright, Patent, Trademark applications</td>
+        </tr>
+        <tr>
+            <td>Real-time Tracking</td>
+            <td>Status updates throughout workflow</td>
+        </tr>
+        <tr>
+            <td>Automated Certificates</td>
+            <td>Generated upon approval with QR codes</td>
+        </tr>
+        <tr>
+            <td>Dynamic Form Builder</td>
+            <td>Admin-configurable form fields</td>
+        </tr>
+        <tr>
+            <td>Badge System</td>
+            <td>Gamification with Bronze→Diamond levels</td>
+        </tr>
+        <tr>
+            <td>Analytics Dashboard</td>
+            <td>Charts and statistics for insights</td>
+        </tr>
+        <tr>
+            <td>Audit Logging</td>
+            <td>Complete activity tracking</td>
+        </tr>
+    </table>
+
+    <h2>9. Security Implementation</h2>
+    <table>
+        <tr>
+            <th>Measure</th>
+            <th>Implementation</th>
+        </tr>
+        <tr>
+            <td>Password Hashing</td>
+            <td>PHP password_hash() with bcrypt</td>
+        </tr>
+        <tr>
+            <td>Session Management</td>
+            <td>PHP native sessions</td>
+        </tr>
+        <tr>
+            <td>Role-Based Access</td>
+            <td>requireRole() on protected pages</td>
+        </tr>
+        <tr>
+            <td>SQL Injection Prevention</td>
+            <td>Prepared statements</td>
+        </tr>
+        <tr>
+            <td>XSS Prevention</td>
+            <td>htmlspecialchars() output encoding</td>
+        </tr>
+    </table>
+
+    <h2>10. Deployment Requirements</h2>
+    <table>
+        <tr>
+            <th>Component</th>
+            <th>Requirement</th>
+        </tr>
+        <tr>
+            <td>PHP</td>
+            <td>7.4 or higher</td>
+        </tr>
+        <tr>
+            <td>MySQL</td>
+            <td>5.7 or higher</td>
+        </tr>
+        <tr>
+            <td>Apache</td>
+            <td>2.4 or higher</td>
+        </tr>
+        <tr>
+            <td>Storage</td>
+            <td>Minimum 500MB</td>
+        </tr>
+    </table>
+
+    <h3>Default Accounts</h3>
+    <table>
+        <tr>
+            <th>Role</th>
+            <th>Email</th>
+            <th>Password</th>
+        </tr>
+        <tr>
+            <td>Director</td>
+            <td>director@chmsu.edu.ph</td>
+            <td>password</td>
+        </tr>
+        <tr>
+            <td>Clerk</td>
+            <td>clerk@chmsu.edu.ph</td>
+            <td>password</td>
+        </tr>
+        <tr>
+            <td>User</td>
+            <td>student@chmsu.edu.ph</td>
+            <td>password</td>
+        </tr>
+    </table>
+
+    <div style="text-align: center; margin-top: 60px; padding-top: 20px; border-top: 1px solid #000;">
+        <p><strong>Carlos Hilado Memorial State University</strong></p>
+        <p>College of Engineering and Technology</p>
+        <p><em>Intellectual Property Registration and Hub System</em></p>
+    </div>
+
+</body>
+
+</html>

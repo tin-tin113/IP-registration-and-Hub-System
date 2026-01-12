@@ -16,5 +16,16 @@
             "<strong>Multiple files:</strong> You can upload multiple documents",
             "<strong>Language:</strong> English or Filipino"
         ]
+    },
+    "payment_instructions": {
+        "title": "Payment Instructions",
+        "items": [
+            "Visit the <strong>Cashier's Office</strong> during office hours (8:00 AM - 5:00 PM)",
+            "Pay the required registration fee",
+            "Request an <strong>official receipt</strong> from the cashier",
+            "Take a clear photo or scan of your receipt",
+            "Upload the receipt below and wait for clerk verification",
+            "Once verified by clerk, your documents will be forwarded to the director for final evaluation"
+        ]
     }
 }

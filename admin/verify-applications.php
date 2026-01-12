@@ -384,6 +384,46 @@ $applications = $result->fetch_all(MYSQLI_ASSOC);
         padding: 16px;
       }
     }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background: white;
+      padding: 32px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 480px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      animation: modalSlide 0.3s ease-out;
+    }
+    
+    @keyframes modalSlide {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .modal-icon {
+      font-size: 48px;
+      color: #10B981;
+      margin-bottom: 20px;
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+    }
   </style>
 </head>
 <body>
@@ -563,8 +603,9 @@ $applications = $result->fetch_all(MYSQLI_ASSOC);
           
 
           
-          <form method="POST">
+          <form method="POST" id="approveForm_<?php echo $app['id']; ?>">
             <input type="hidden" name="app_id" value="<?php echo $app['id']; ?>">
+            <input type="hidden" name="action" value="approve_office_visit">
             
             <div class="form-group">
               <label for="clerk_notes_<?php echo $app['id']; ?>">Verification Notes (Optional)</label>
@@ -572,7 +613,7 @@ $applications = $result->fetch_all(MYSQLI_ASSOC);
             </div>
             
             <div class="actions">
-              <button type="submit" name="action" value="approve_office_visit" class="btn-approve">
+              <button type="button" class="btn-approve" onclick="showApproveModal(<?php echo $app['id']; ?>)">
                 <i class="fas fa-check"></i> Approve for Office Visit
               </button>
               <button type="button" class="btn-reject" onclick="document.getElementById('rejectForm_<?php echo $app['id']; ?>').style.display='block'">
@@ -602,6 +643,53 @@ $applications = $result->fetch_all(MYSQLI_ASSOC);
       <?php endforeach; ?>
     <?php endif; ?>
   </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="approveModal">
+    <div class="modal-content">
+      <div class="modal-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h2 style="margin-bottom: 10px; color: #1E293B;">Confirm Approval</h2>
+      <p style="color: #64748B; margin-bottom: 20px;">Are you sure you want to approve this application for Office Visit?</p>
+      
+      <div class="modal-actions">
+        <button type="button" style="background: #E2E8F0; color: #475569;" onclick="closeModal()">
+          Cancel
+        </button>
+        <button type="button" class="btn-approve" onclick="confirmApprove()">
+          Yes, Approve
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentAppId = null;
+
+    function showApproveModal(appId) {
+      currentAppId = appId;
+      document.getElementById('approveModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('approveModal').style.display = 'none';
+      currentAppId = null;
+    }
+
+    function confirmApprove() {
+      if (currentAppId) {
+        document.getElementById('approveForm_' + currentAppId).submit();
+      }
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('approveModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+  </script
 
 </body>
 </html>

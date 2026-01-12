@@ -112,10 +112,17 @@ try {
     $user_data = ['email' => '', 'full_name' => ''];
 }
 
-// If ID provided, check if it's a valid draft for this user
+// If ID provided, check if it's a valid draft or rejected application for this user
+$is_resubmit = isset($_GET['resubmit']) && $_GET['resubmit'] == '1';
+
 if ($app_id) {
     try {
-        $stmt = $conn->prepare("SELECT * FROM ip_applications WHERE id = ? AND user_id = ? AND status = 'draft'");
+        // Allow loading drafts OR rejected applications (if resubmit flag is set)
+        if ($is_resubmit) {
+            $stmt = $conn->prepare("SELECT * FROM ip_applications WHERE id = ? AND user_id = ? AND status = 'rejected'");
+        } else {
+            $stmt = $conn->prepare("SELECT * FROM ip_applications WHERE id = ? AND user_id = ? AND status = 'draft'");
+        }
         if (!$stmt) {
             throw new Exception("Failed to prepare draft check statement: " . $conn->error);
         }
@@ -132,7 +139,7 @@ if ($app_id) {
     } catch (Exception $e) {
         logApplicationError('Failed to fetch draft data', ['app_id' => $app_id, 'user_id' => $user_id, 'error' => $e->getMessage()]);
         $app_id = null;
-        $error = 'Unable to load draft. Please try again.';
+        $error = 'Unable to load application. Please try again.';
     }
 }
 
@@ -512,7 +519,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $document_file_json = !empty($final_documents) ? json_encode($final_documents) : '';
           
           // UPDATE - Store all information in database
-          $stmt = $conn->prepare("UPDATE ip_applications SET title=?, inventor_name=?, ip_type=?, research_type=?, abstract=?, document_file=?, status=?, updated_at=NOW() WHERE id=? AND user_id=?");
+          // Also clear rejection fields when resubmitting (status becomes 'submitted')
+          $stmt = $conn->prepare("UPDATE ip_applications SET title=?, inventor_name=?, ip_type=?, research_type=?, abstract=?, document_file=?, status=?, rejection_reason=NULL, director_feedback=NULL, rejected_at=NULL, updated_at=NOW() WHERE id=? AND user_id=?");
           $stmt->bind_param("sssssssii", $title, $inventor_name, $ip_type, $research_type, $abstract, $document_file_json, $status, $existing_app_id, $user_id);
           
           if ($stmt->execute()) {
@@ -600,12 +608,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       align-items: center;
       margin-bottom: 30px;
       padding-bottom: 20px;
-      border-bottom: 2px solid #667eea;
+      border-bottom: 2px solid #1B7F4D;
     }
     
     .header i {
       font-size: 32px;
-      color: #667eea;
+      color: #1B7F4D;
       margin-right: 15px;
     }
     
@@ -641,23 +649,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     input[type="text"],
     input[type="email"],
+    input[type="date"],
+    input[type="number"],
+    input[type="tel"],
     select,
     textarea {
       width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+      padding: 12px 14px;
+      border: 2px solid #E2E8F0;
+      border-radius: 10px;
       font-size: 14px;
       font-family: inherit;
       box-sizing: border-box;
+      transition: all 0.2s;
+      background: #F8FAFC;
     }
     
     input:focus,
     select:focus,
     textarea:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 5px rgba(102,126,234,0.3);
+      border-color: #1B7F4D;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(27, 127, 77, 0.1);
     }
     
     textarea {
@@ -678,8 +692,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     .file-upload:hover {
-      border-color: #667eea;
-      background-color: #f0f4ff;
+      border-color: #1B7F4D;
+      background-color: #F0FDF4;
     }
     
     .file-upload input[type="file"] {
@@ -688,7 +702,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     .file-upload i {
       font-size: 32px;
-      color: #667eea;
+      color: #1B7F4D;
       margin-bottom: 10px;
       display: block;
     }
@@ -924,7 +938,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div style="background: linear-gradient(135deg, #1B5C3B 0%, #0F3D2E 100%); color: white; padding: 25px; border-radius: 8px; margin-bottom: 30px;">
       <h2 style="margin-bottom: 15px; font-size: 16px;"><i class="fas fa-clipboard-list"></i> Requirements & Instructions</h2>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <?php foreach ($form_instructions as $section): ?>
+        <?php foreach ($form_instructions as $key => $section): 
+          // Skip payment instructions on this page (only for upload-payment.php)
+          if ($key === 'payment_instructions') continue;
+        ?>
         <div>
           <h4 style="margin-bottom: 8px; font-size: 13px;"><?php echo htmlspecialchars($section['title']); ?></h4>
           <ul style="margin-left: 20px; font-size: 13px; line-height: 1.8;">
@@ -1066,7 +1083,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
       <div class="form-group">
         <label for="title">IP Work Title <span style="color: #dc3545;">*</span> <span style="font-size: 12px; font-weight: normal; color: #666;">(Required for submission)</span></label>
-        <input type="text" id="title" name="title" placeholder="e.g., Advanced Machine Learning Framework" value="<?php echo htmlspecialchars($draft_data['title'] ?? ''); ?>">
+        <input type="text" id="title" name="title" placeholder="e.g., Advanced Machine Learning Framework" value="<?php echo htmlspecialchars($draft_data['title'] ?? ''); ?>" maxlength="200">
       </div>
       
       <div class="form-group">
@@ -1114,29 +1131,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             input.placeholder = `Inventor ${i + 1} Name (e.g., Juan D. Cruz, Jr.)`;
             input.value = currentValues[i] || '';
             input.required = true;
+            input.maxLength = 100;
             
             // Apply name validation (block numbers and special symbols)
             input.addEventListener('input', function() {
               const cursorPos = this.selectionStart;
               const oldValue = this.value;
-              // Filter out invalid characters
-              let newValue = oldValue.replace(inventorNameFilter, '');
-              // Apply proper case
-              newValue = newValue.replace(/\w\S*/g, function(txt) {
-                return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-              });
               
-              if (oldValue !== newValue) {
-                this.value = newValue;
-                const diff = oldValue.length - newValue.length;
-                this.setSelectionRange(cursorPos - diff, cursorPos - diff);
-                // Visual feedback for blocked input
+              // 1. Filter invalid characters
+              const filteredValue = oldValue.replace(inventorNameFilter, '');
+              
+              // 2. Check for INVALID input (Trigger Alert ONLY if characters were blocked)
+              if (oldValue !== filteredValue) {
                 this.style.borderColor = '#dc3545';
                 this.style.animation = 'shake 0.3s ease-in-out';
                 setTimeout(() => {
                   this.style.borderColor = '';
                   this.style.animation = '';
                 }, 500);
+              }
+
+              // 3. Apply Proper Case (Formatting - Silent)
+              const formattedValue = filteredValue.replace(/\w\S*/g, function(txt) {
+                return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+              });
+              
+              // 4. Update value if changed (by either filter or format)
+              if (oldValue !== formattedValue) {
+                this.value = formattedValue;
+                const diff = oldValue.length - formattedValue.length;
+                this.setSelectionRange(cursorPos - diff, cursorPos - diff);
               }
               combineInventorNames();
             });
@@ -1278,7 +1302,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="existing-file-item" data-file-index="<?php echo $index; ?>" data-file-name="<?php echo htmlspecialchars($file); ?>" style="font-size: 13px; background: #f0f4ff; padding: 8px 12px; margin-bottom: 5px; border-radius: 4px; display: inline-flex; align-items: center; gap: 8px; margin-right: 8px;">
                   <i class="fas fa-file"></i> 
                   <span><?php echo htmlspecialchars($file); ?></span>
-                  <button type="button" class="remove-existing-file" data-file-name="<?php echo htmlspecialchars($file); ?>" style="background: #f44336; color: white; border: none; border-radius: 3px; padding: 3px 8px; cursor: pointer; font-size: 11px; margin-left: 8px;" title="Remove from form (file will remain in draft)">
+                  
+                  <!-- View Button -->
+                  <a href="../uploads/<?php echo htmlspecialchars($file); ?>" target="_blank" style="background: #10B981; color: white; border-radius: 3px; padding: 3px 8px; text-decoration: none; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;" title="View Document">
+                    <i class="fas fa-eye"></i> View
+                  </a>
+                  
+                  <button type="button" class="remove-existing-file" data-file-name="<?php echo htmlspecialchars($file); ?>" style="background: #f44336; color: white; border: none; border-radius: 3px; padding: 3px 8px; cursor: pointer; font-size: 11px; margin-left: 4px;" title="Remove from form (file will remain in draft)">
                     <i class="fas fa-times"></i>
                   </button>
               </div>
@@ -1360,8 +1390,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       phoneFilter: /[^\d\s()+\-]/g,
       address: /^[A-Za-z0-9À-ÿ\s.,#\-'\/]*$/,
       addressFilter: /[^A-Za-z0-9À-ÿ\s.,#\-'\/]/g,
-      employeeId: /^[A-Za-z0-9\-]*$/,
-      employeeIdFilter: /[^A-Za-z0-9\-]/g,
+      employeeId: /^[0-9]*$/,
+      employeeIdFilter: /[^0-9]/g,
       postal: /^[0-9]*$/,
       postalFilter: /[^0-9]/g,
       nationality: /^[A-Za-zÀ-ÿ\s]*$/,
@@ -1578,6 +1608,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               ${file.name}
             </div>
             <span class="file-item-size">${sizeInMB} MB</span>
+            
+            <a href="${URL.createObjectURL(file)}" target="_blank" style="background: #10B981; color: white; border-radius: 3px; padding: 5px 8px; text-decoration: none; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; margin-right: 5px;" title="View File">
+               <i class="fas fa-eye"></i> View
+            </a>
+            
             <button type="button" class="file-item-remove" data-file-index="${index}" style="background: #f44336; color: white; border: none; border-radius: 3px; padding: 5px 10px; cursor: pointer; font-size: 11px;">
               <i class="fas fa-times"></i> Remove
             </button>

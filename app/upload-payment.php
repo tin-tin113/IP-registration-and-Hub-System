@@ -329,15 +329,34 @@ $payment_amount = !empty($app['payment_amount']) ? $app['payment_amount'] : IP_R
       </div>
       
       <div class="instructions">
-        <h3><i class="fas fa-info-circle"></i> Payment Instructions</h3>
+        <?php
+        // Load instructions from JSON
+        $instructions_file = __DIR__ . '/../config/form_instructions.json';
+        $payment_instr = [
+          'title' => 'Payment Instructions',
+          'items' => [
+            "Visit the <strong>" . CASHIER_LOCATION . "</strong> during office hours (" . IP_OFFICE_HOURS . ")",
+            "Pay the required registration fee: <strong style='color: #E07D32;'>₱" . number_format($payment_amount, 2) . "</strong>",
+            "Request an <strong>official receipt</strong> from the cashier",
+            "Take a clear photo or scan of your receipt",
+            "Upload the receipt below and wait for clerk verification",
+            "Once verified by clerk, your documents will be forwarded to the director for final evaluation"
+          ]
+        ];
+        
+        if (file_exists($instructions_file)) {
+          $all_instr = json_decode(file_get_contents($instructions_file), true);
+          if (!empty($all_instr['payment_instructions'])) {
+             $payment_instr = $all_instr['payment_instructions'];
+          }
+        }
+        ?>
+        <h3><i class="fas fa-info-circle"></i> <?php echo htmlspecialchars($payment_instr['title']); ?></h3>
         <ol>
-          <li>Visit the <strong><?php echo CASHIER_LOCATION; ?></strong> during office hours (<?php echo IP_OFFICE_HOURS; ?>)</li>
-          <li>Pay the required registration fee: <strong style="color: #E07D32; font-size: 16px;">₱<?php echo number_format($payment_amount, 2); ?></strong></li>
-          <li>Request an <strong>official receipt</strong> from the cashier</li>
-          <li>Take a clear photo or scan of your receipt</li>
-          <li>Upload the receipt below and wait for clerk verification</li>
-          <li>Once verified by clerk, your documents will be forwarded to the director for final evaluation</li>
-        </ol>+
+          <?php foreach ($payment_instr['items'] as $item): ?>
+            <li><?php echo $item; // Allow HTML in instructions ?></li>
+          <?php endforeach; ?>
+        </ol>
       </div>
       
       <?php if (!empty($app['payment_rejection_reason'])): ?>

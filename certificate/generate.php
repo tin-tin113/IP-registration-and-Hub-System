@@ -161,7 +161,7 @@ $approval_date = date('F d, Y', strtotime($cert['approved_at']));
     }
     
     .certificate {
-      padding: 60px;
+      padding: 20px 35px;
       background: 
         linear-gradient(to right, #1B5C3B 2px, transparent 2px) 0 0,
         linear-gradient(to right, #1B5C3B 2px, transparent 2px) 0 100%,
@@ -172,7 +172,7 @@ $approval_date = date('F d, Y', strtotime($cert['approved_at']));
         linear-gradient(to top, #1B5C3B 2px, transparent 2px) 0 100%,
         linear-gradient(to top, #1B5C3B 2px, transparent 2px) 100% 100%;
       background-repeat: no-repeat;
-      background-size: 40px 40px;
+      background-size: 30px 30px;
       position: relative;
     }
     
@@ -189,15 +189,15 @@ $approval_date = date('F d, Y', strtotime($cert['approved_at']));
     
     .header {
       text-align: center;
-      margin-bottom: 40px;
-      border-bottom: 3px double #1B5C3B;
-      padding-bottom: 30px;
+      margin-bottom: 10px;
+      border-bottom: 2px double #1B5C3B;
+      padding-bottom: 8px;
     }
     
     .logo {
-      width: 100px;
-      height: 100px;
-      margin: 0 auto 20px;
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 10px;
       background: url('../public/logos/chmsu-logo.png') center/contain no-repeat;
       background-size: contain;
     }
@@ -209,91 +209,92 @@ $approval_date = date('F d, Y', strtotime($cert['approved_at']));
     }
     
     .university-name {
-      font-size: 28px;
+      font-size: 20px;
       font-weight: bold;
       color: #1B5C3B;
-      margin-bottom: 5px;
+      margin-bottom: 3px;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
     }
     
     .department {
-      font-size: 16px;
+      font-size: 13px;
       color: #666;
       font-style: italic;
     }
     
     .cert-title {
       text-align: center;
-      margin: 40px 0;
+      margin: 10px 0;
     }
     
     .cert-title h1 {
-      font-size: 36px;
+      font-size: 26px;
       color: #1B5C3B;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
       text-transform: uppercase;
-      letter-spacing: 3px;
+      letter-spacing: 2px;
     }
     
     .cert-subtitle {
-      font-size: 18px;
+      font-size: 14px;
       color: #E07D32;
       font-weight: 600;
     }
     
     .cert-body {
       text-align: center;
-      line-height: 2;
-      font-size: 16px;
+      line-height: 1.5;
+      font-size: 13px;
       color: #333;
-      margin: 40px 0;
+      margin: 10px 0;
     }
     
     .cert-body p {
-      margin-bottom: 20px;
+      margin-bottom: 8px;
     }
     
     .recipient-name {
-      font-size: 32px;
+      font-size: 20px;
       font-weight: bold;
       color: #1B5C3B;
-      margin: 20px 0;
+      margin: 5px 0;
       text-decoration: underline;
       text-decoration-color: #E07D32;
-      text-underline-offset: 8px;
+      text-underline-offset: 4px;
     }
     
     .work-title {
-      font-size: 22px;
+      font-size: 15px;
       font-weight: bold;
       color: #E07D32;
       font-style: italic;
-      margin: 20px 0;
+      margin: 5px 0;
     }
     
     .ip-type {
       display: inline-block;
       background: #1B5C3B;
       color: white;
-      padding: 8px 20px;
-      border-radius: 5px;
+      padding: 5px 15px;
+      border-radius: 4px;
       font-weight: bold;
-      margin: 10px 0;
+      font-size: 12px;
+      margin: 5px 0;
     }
     
     .cert-details {
-      margin: 40px 0;
-      padding: 20px;
+      margin: 8px 0;
+      padding: 5px 10px;
       background: #f9f9f9;
-      border-left: 5px solid #E07D32;
+      border-left: 3px solid #E07D32;
+      font-size: 11px;
     }
     
     .detail-row {
       display: flex;
       justify-content: space-between;
-      margin: 10px 0;
-      font-size: 14px;
+      margin: 5px 0;
     }
     
     .detail-label {
@@ -304,75 +305,87 @@ $approval_date = date('F d, Y', strtotime($cert['approved_at']));
     .signatures {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 40px;
-      margin-top: 60px;
+      gap: 20px;
+      margin-top: 40px;
       text-align: center;
     }
     
     .signature {
       border-top: 2px solid #333;
-      padding-top: 10px;
+      padding-top: 8px;
     }
     
     .signature-name {
       font-weight: bold;
-      font-size: 16px;
+      font-size: 14px;
       color: #1B5C3B;
     }
     
     .signature-title {
-      font-size: 13px;
+      font-size: 11px;
       color: #666;
       font-style: italic;
     }
     
     .footer {
-      margin-top: 40px;
+      margin-top: 8px;
       text-align: center;
-      font-size: 11px;
+      font-size: 9px;
       color: #999;
       border-top: 1px solid #ddd;
-      padding-top: 20px;
+      padding-top: 6px;
     }
     
     .qr-section {
       position: absolute;
-      bottom: 60px;
-      right: 60px;
+      bottom: 40px;
+      right: 45px;
       text-align: center;
     }
     
     .qr-code {
-      width: 80px;
-      height: 80px;
+      width: 60px;
+      height: 60px;
       border: 2px solid #1B5C3B;
-      padding: 5px;
+      padding: 3px;
       background: white;
     }
     
     .qr-label {
-      font-size: 10px;
+      font-size: 9px;
       color: #666;
-      margin-top: 5px;
+      margin-top: 3px;
     }
     
     @media print {
       body {
         background: white;
         padding: 0;
+        margin: 0;
       }
       
       .controls {
-        display: none;
+        display: none !important;
       }
       
       .certificate-container {
         box-shadow: none;
+        max-width: 100%;
+        margin: 0;
+        width: 100%;
+        height: 100vh;
+      }
+      
+      .certificate {
+        padding: 25px 30px;
+        height: 100%;
+        max-height: none;
+        page-break-inside: avoid;
       }
       
       @page {
         size: A4 landscape;
-        margin: 0;
+        margin: 5mm;
       }
     }
   </style>
@@ -417,12 +430,12 @@ $approval_date = date('F d, Y', strtotime($cert['approved_at']));
         <div class="recipient-name" style="text-align: center; white-space: pre-line;"><?php echo strtoupper(htmlspecialchars($cert['inventor_name'] ?? $cert['full_name'])); ?></div>
         
         <?php if ($cert['department']): ?>
-          <p style="font-size: 14px; color: #666;">
+          <p style="font-size: 12px; color: #666;">
             <?php echo htmlspecialchars($cert['department']); ?>
           </p>
         <?php endif; ?>
         
-        <p style="margin-top: 30px;">has successfully registered the intellectual property work entitled</p>
+        <p style="margin-top: 10px;">has successfully registered the intellectual property work entitled</p>
         
         <div class="work-title">"<?php echo htmlspecialchars($cert['title']); ?>"</div>
         
@@ -430,7 +443,7 @@ $approval_date = date('F d, Y', strtotime($cert['approved_at']));
         
         <div class="ip-type"><?php echo $cert['ip_type']; ?></div>
         
-        <p style="margin-top: 30px;">
+        <p style="margin-top: 10px; font-size: 11px;">
           <?php echo nl2br(htmlspecialchars($acknowledgment_text)); ?>
         </p>
       </div>
@@ -481,11 +494,21 @@ $approval_date = date('F d, Y', strtotime($cert['approved_at']));
     function downloadPDF() {
       const element = document.getElementById('certificate');
       const opt = {
-        margin: 0,
+        margin: [5, 5, 5, 5],
         filename: 'CHMSU_Certificate_<?php echo $cert['certificate_number']; ?>.pdf',
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          logging: false,
+          letterRendering: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'landscape'
+        },
+        pagebreak: { mode: 'avoid-all' }
       };
       html2pdf().set(opt).from(element).save();
     }
