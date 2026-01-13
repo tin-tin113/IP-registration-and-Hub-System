@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
   }
 }
 
-$result = $conn->query("SELECT a.*, u.full_name, u.email, u.department, u.contact_number,
+$result = $conn->query("SELECT a.*, u.full_name, u.email, u.department,
   p.first_name, p.middle_name, p.last_name, p.suffix, p.birthdate, p.gender, 
   p.nationality, p.employment_status, p.employee_id, p.college, p.contact_number as profile_contact,
   p.address_street, p.address_barangay, p.address_city, p.address_province, p.address_postal, p.is_complete as profile_complete

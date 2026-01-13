@@ -2,10 +2,12 @@
 require_once '../config/config.php';
 require_once '../config/db.php';
 require_once '../config/session.php';
+require_once '../config/badge-auto-award.php';
 
 requireRole(['clerk', 'director']);
 
 $success = '';
+$error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_thresholds') {
   $bronze = intval($_POST['bronze_threshold'] ?? 10);
@@ -14,25 +16,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
   $platinum = intval($_POST['platinum_threshold'] ?? 250);
   $diamond = intval($_POST['diamond_threshold'] ?? 500);
   
-  $conn->query("DELETE FROM badge_thresholds");
-  $stmt = $conn->prepare("INSERT INTO badge_thresholds (badge_type, views_required, points_awarded) VALUES (?, ?, ?)");
-  
-  $badges = [
-    ['Bronze', $bronze, 50],
-    ['Silver', $silver, 150],
-    ['Gold', $gold, 300],
-    ['Platinum', $platinum, 500],
-    ['Diamond', $diamond, 1000]
-  ];
-  
-  foreach ($badges as $badge) {
-    $stmt->bind_param("sii", $badge[0], $badge[1], $badge[2]);
-    $stmt->execute();
+  // Validation: Ensure thresholds are strictly ascending and unique
+  if ($bronze >= $silver || $silver >= $gold || $gold >= $platinum || $platinum >= $diamond) {
+    $error = "Thresholds must be in strictly ascending order (Bronze < Silver < Gold < Platinum < Diamond) and cannot be equal.";
+  } else {
+    $conn->query("DELETE FROM badge_thresholds");
+    $stmt = $conn->prepare("INSERT INTO badge_thresholds (badge_type, views_required, points_awarded) VALUES (?, ?, ?)");
+    
+    $badges = [
+      ['Bronze', $bronze, 50],
+      ['Silver', $silver, 150],
+      ['Gold', $gold, 300],
+      ['Platinum', $platinum, 500],
+      ['Diamond', $diamond, 1000]
+    ];
+    
+    foreach ($badges as $badge) {
+      $stmt->bind_param("sii", $badge[0], $badge[1], $badge[2]);
+      $stmt->execute();
+    }
+    $stmt->close();
+    
+    // Re-evaluate badges for all approved applications based on new thresholds
+    $approved_apps = $conn->query("SELECT id FROM ip_applications WHERE status = 'approved'");
+    $badges_awarded = 0;
+    while ($app = $approved_apps->fetch_assoc()) {
+      // checkAndAwardBadges will award any badges the application now qualifies for
+      checkAndAwardBadges($app['id']);
+      $badges_awarded++;
+    }
+    
+    auditLog('Update Badge Thresholds', 'Settings', 0, null, json_encode([
+      'bronze' => $bronze,
+      'silver' => $silver,
+      'gold' => $gold,
+      'platinum' => $platinum,
+      'diamond' => $diamond,
+      'applications_evaluated' => $badges_awarded
+    ]));
+    
+    $success = "Badge thresholds updated successfully! Re-evaluated $badges_awarded approved applications for new badges.";
   }
-  $stmt->close();
-  
-  auditLog('Update Badge Thresholds', 'Settings', 0);
-  $success = 'Badge thresholds updated successfully!';
 }
 
 $thresholds_result = $conn->query("SELECT * FROM badge_thresholds ORDER BY views_required ASC");
@@ -359,13 +383,20 @@ $users = $users_result->fetch_all(MYSQLI_ASSOC);
       <div class="alert"><?php echo htmlspecialchars($success); ?></div>
     <?php endif; ?>
     
+    <?php if (!empty($error)): ?>
+      <div class="alert" style="background: #f8d7da; color: #721c24; border-color: #f5c6cb; border-left-color: #721c24;">
+        <i class="fas fa-exclamation-triangle"></i> <?php echo htmlspecialchars($error); ?>
+      </div>
+    <?php endif; ?>
+    
     <div class="info-box">
       <h3><i class="fas fa-info-circle"></i> How Badge System Works</h3>
       <ul>
-        <li>Badges are automatically awarded when approved IP works reach view thresholds</li>
-        <li>Users earn innovation points with each badge</li>
-        <li>You can adjust thresholds below - system will automatically award badges based on new settings</li>
-        <li>Each badge can only be earned once per user</li>
+        <li><strong>All IP types</strong> (Copyright, Patent, Trademark) can earn all 5 badge tiers equally</li>
+        <li>Badges are awarded <strong>per application</strong> based on that work's view count</li>
+        <li>Users earn innovation points with each badge (cumulative across all works)</li>
+        <li>When you update thresholds, the system <strong>immediately re-evaluates</strong> all approved applications</li>
+        <li>When a user earns a <strong>Diamond badge</strong>, they also receive an <strong>Achievement Certificate</strong></li>
       </ul>
     </div>
     

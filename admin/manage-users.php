@@ -9,27 +9,7 @@ $user_role = getUserRole();
 $search = trim($_GET['search'] ?? '');
 $filter_role = $_GET['role'] ?? 'user';
 
-// Handle user status toggle
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'toggle_status') {
-  $target_user_id = intval($_POST['user_id']);
-  $current_status = intval($_POST['current_status']);
-  $reason = trim($_POST['reason'] ?? '');
-  
-  // Prevent self-deactivation
-  if ($target_user_id !== $_SESSION['user_id']) {
-    $new_status = $current_status ? 0 : 1;
-    $stmt = $conn->prepare("UPDATE users SET is_active = ? WHERE id = ?");
-    $stmt->bind_param("ii", $new_status, $target_user_id);
-    
-    if ($stmt->execute()) {
-      $action_name = $new_status ? 'Activate User' : 'Deactivate User';
-      auditLog($action_name, 'User', $target_user_id, $current_status, json_encode(['status' => $new_status, 'reason' => $reason]));
-      header("Location: manage-users.php?view=" . $target_user_id . "&message=" . urlencode("User status updated successfully"));
-      exit;
-    }
-    $stmt->close();
-  }
-}
+// Handle user status toggle - REMOVED (is_active column deprecated)
 
 // query to get all users
 $query = "SELECT
@@ -38,10 +18,8 @@ $query = "SELECT
   u.full_name,
   u.role,
   u.department,
-  u.contact_number,
   u.innovation_points,
   u.created_at,
-  u.is_active,
   COUNT(DISTINCT a.id) as total_applications,
   COUNT(DISTINCT CASE WHEN a.status='approved' THEN a.id END) as approved_applications,
   COUNT(DISTINCT b.id) as total_badges,
@@ -637,29 +615,8 @@ if ($view_user_id) {
               <div class="info-value"><?php echo htmlspecialchars($view_user['department'] ?? 'N/A'); ?></div>
             </div>
             <div class="info-item">
-              <div class="info-label">Contact Number</div>
-              <div class="info-value"><?php echo htmlspecialchars($view_user['contact_number'] ?? 'N/A'); ?></div>
-            </div>
-            <div class="info-item">
               <div class="info-label">Member Since</div>
               <div class="info-value"><?php echo date('F d, Y', strtotime($view_user['created_at'])); ?></div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Account Status</div>
-              <div class="info-value">
-                <?php if ($view_user['is_active']): ?>
-                  <span style="color: #166534; font-weight: 700;"><i class="fas fa-check-circle"></i> Active</span>
-                <?php else: ?>
-                  <span style="color: #DC2626; font-weight: 700;"><i class="fas fa-ban"></i> Inactive</span>
-                <?php endif; ?>
-                
-                <?php if ($view_user['id'] !== $_SESSION['user_id']): ?>
-                  <button onclick="toggleUserStatus(<?php echo $view_user['id']; ?>, <?php echo $view_user['is_active']; ?>, '<?php echo htmlspecialchars($view_user['full_name']); ?>')" 
-                          style="margin-left: 10px; padding: 4px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 11px; font-weight: 600; background: <?php echo $view_user['is_active'] ? '#FEE2E2' : '#DCFCE7'; ?>; color: <?php echo $view_user['is_active'] ? '#991B1B' : '#166534'; ?>;">
-                    <?php echo $view_user['is_active'] ? 'Deactivate' : 'Activate'; ?>
-                  </button>
-                <?php endif; ?>
-              </div>
             </div>
           </div>
         </div>
@@ -823,64 +780,5 @@ if ($view_user_id) {
     </div>
   <?php endif; ?>
 
-  <!-- Status Toggle Modal -->
-  <div id="statusModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-      <h3 id="modalTitle" style="color: #0A4D2E; margin-bottom: 15px; font-size: 20px;">Confirm Action</h3>
-      <p id="modalText" style="color: #64748B; margin-bottom: 20px; font-size: 14px; line-height: 1.5;">Are you sure you want to update this user's status?</p>
-      
-      <form method="POST">
-        <input type="hidden" name="action" value="toggle_status">
-        <input type="hidden" id="modalUserId" name="user_id">
-        <input type="hidden" id="modalCurrentStatus" name="current_status">
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label for="reason" style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px; color: #333;">Reason (Required)</label>
-          <textarea name="reason" id="reason" required placeholder="e.g. Graduated, Policy Violation, Account Compromised..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-height: 80px; resize: vertical;"></textarea>
-        </div>
-        
-        <div style="display: flex; gap: 10px; justify-content: flex-end;">
-          <button type="button" onclick="document.getElementById('statusModal').style.display = 'none'" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; font-weight: 600; color: #64748B;">Cancel</button>
-          <button type="submit" id="modalConfirmBtn" style="padding: 10px 20px; border: none; background: #0A4D2E; color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">Confirm</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    function toggleUserStatus(userId, currentStatus, userName) {
-      const modal = document.getElementById('statusModal');
-      const title = document.getElementById('modalTitle');
-      const text = document.getElementById('modalText');
-      const confirmBtn = document.getElementById('modalConfirmBtn');
-      
-      document.getElementById('modalUserId').value = userId;
-      document.getElementById('modalCurrentStatus').value = currentStatus;
-      document.getElementById('reason').value = ''; // Clear reason
-      
-      if (currentStatus) {
-        // Deactivate
-        title.innerText = 'Deactivate User';
-        text.innerHTML = `Are you sure you want to deactivate <strong>${userName}</strong>? They will no longer be able to log in.`;
-        confirmBtn.style.background = '#DC2626';
-        confirmBtn.innerText = 'Deactivate';
-      } else {
-        // Activate
-        title.innerText = 'Activate User';
-        text.innerHTML = `Are you sure you want to re-activate <strong>${userName}</strong>? They will be allowed to log in again.`;
-        confirmBtn.style.background = '#166534';
-        confirmBtn.innerText = 'Activate';
-      }
-      
-      modal.style.display = 'flex';
-    }
-    
-    // Close modal when clicking outside
-    document.getElementById('statusModal').addEventListener('click', function(e) {
-      if (e.target === this) {
-        this.style.display = 'none';
-      }
-    });
-  </script>
 </body>
 </html>

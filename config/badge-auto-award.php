@@ -64,15 +64,9 @@ function checkAndAwardBadges($application_id) {
   $view_count = intval($view_data['view_count'] ?? 0);
   $view_count_stmt->close();
   
-  // Define different badge types for different IP types
-  // Each IP type gets its own set of badges based on views
-  $ip_type_badges = [
-    'Copyright' => ['Bronze', 'Silver', 'Gold'],
-    'Patent' => ['Bronze', 'Silver', 'Gold', 'Platinum'],
-    'Trademark' => ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond']
-  ];
-  
-  $available_badges = $ip_type_badges[$ip_type] ?? ['Bronze', 'Silver', 'Gold'];
+  // All IP types are eligible for all badge tiers
+  // Badges are awarded based on views, not IP type
+  $available_badges = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
   
   // Get badge thresholds
   $thresholds_result = $conn->query("SELECT * FROM badge_thresholds ORDER BY views_required ASC");
@@ -130,36 +124,37 @@ function checkAndAwardBadges($application_id) {
   }
   
   // Update user's innovation points based on badge thresholds (ensure it matches)
-  if ($points_awarded_total > 0) {
-    // Recalculate total points based on all badges earned
-    $points_stmt = $conn->prepare("
-      SELECT SUM(bt.points_awarded) as total_points
-      FROM badges b
-      JOIN badge_thresholds bt ON b.badge_type = bt.badge_type
-      WHERE b.user_id = ?
-    ");
-    $points_stmt->bind_param("i", $user_id);
-    $points_stmt->execute();
-    $points_result = $points_stmt->get_result();
-    $points_data = $points_result->fetch_assoc();
-    $calculated_points = intval($points_data['total_points'] ?? 0);
-    $points_stmt->close();
-    
-    // Get current points
-    $current_points_stmt = $conn->prepare("SELECT innovation_points FROM users WHERE id = ?");
-    $current_points_stmt->bind_param("i", $user_id);
-    $current_points_stmt->execute();
-    $current_points_result = $current_points_stmt->get_result();
-    $current_points = intval($current_points_result->fetch_assoc()['innovation_points'] ?? 0);
-    $current_points_stmt->close();
-    
-    // Update to match calculated points
-    if ($calculated_points != $current_points) {
-      $update_points = $conn->prepare("UPDATE users SET innovation_points = ? WHERE id = ?");
-      $update_points->bind_param("ii", $calculated_points, $user_id);
-      $update_points->execute();
-      $update_points->close();
-    }
+  // Update user's innovation points based on badge thresholds (ensure it matches)
+  // Always recalculate to ensure points are in sync with current thresholds
+  
+  // Recalculate total points based on all badges earned
+  $points_stmt = $conn->prepare("
+    SELECT SUM(bt.points_awarded) as total_points
+    FROM badges b
+    JOIN badge_thresholds bt ON b.badge_type = bt.badge_type
+    WHERE b.user_id = ?
+  ");
+  $points_stmt->bind_param("i", $user_id);
+  $points_stmt->execute();
+  $points_result = $points_stmt->get_result();
+  $points_data = $points_result->fetch_assoc();
+  $calculated_points = intval($points_data['total_points'] ?? 0);
+  $points_stmt->close();
+  
+  // Get current points
+  $current_points_stmt = $conn->prepare("SELECT innovation_points FROM users WHERE id = ?");
+  $current_points_stmt->bind_param("i", $user_id);
+  $current_points_stmt->execute();
+  $current_points_result = $current_points_stmt->get_result();
+  $current_points = intval($current_points_result->fetch_assoc()['innovation_points'] ?? 0);
+  $current_points_stmt->close();
+  
+  // Update to match calculated points
+  if ($calculated_points != $current_points) {
+    $update_points = $conn->prepare("UPDATE users SET innovation_points = ? WHERE id = ?");
+    $update_points->bind_param("ii", $calculated_points, $user_id);
+    $update_points->execute();
+    $update_points->close();
   }
   
   // Check if user has all badges and award achievement certificate
@@ -168,27 +163,21 @@ function checkAndAwardBadges($application_id) {
   $thresholds_result->free();
 }
 
-// Check and award achievement certificate when all badges are earned
+// Check and award achievement certificate when user earns Diamond badge
+// Diamond badge means the application reached 500+ views and earned all 5 badge tiers
 function checkAchievementCertificate($user_id) {
   global $conn;
   
-  // Get all badge types
-  $all_badges = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
+  // Check if user has earned at least one Diamond badge
+  // Earning Diamond means one application reached all 5 badge levels (500+ views)
+  $diamond_check = $conn->prepare("SELECT id, application_id, work_title FROM badges WHERE user_id = ? AND badge_type = 'Diamond' LIMIT 1");
+  $diamond_check->bind_param("i", $user_id);
+  $diamond_check->execute();
+  $diamond_result = $diamond_check->get_result();
   
-  // Check if user has at least one of each badge type across all their applications
-  $has_all_badges = true;
-  foreach ($all_badges as $badge_type) {
-    $check = $conn->prepare("SELECT id FROM badges WHERE user_id = ? AND badge_type = ? LIMIT 1");
-    $check->bind_param("is", $user_id, $badge_type);
-    $check->execute();
-    if ($check->get_result()->num_rows === 0) {
-      $has_all_badges = false;
-    }
-    $check->close();
-    if (!$has_all_badges) break;
-  }
-  
-  if ($has_all_badges) {
+  if ($diamond_result->num_rows > 0) {
+    $diamond_badge = $diamond_result->fetch_assoc();
+    
     // Check if achievement certificate already exists
     $cert_check = $conn->prepare("SELECT id FROM achievement_certificates WHERE user_id = ?");
     $cert_check->bind_param("i", $user_id);
@@ -203,9 +192,14 @@ function checkAchievementCertificate($user_id) {
       $insert_cert->execute();
       $insert_cert->close();
       
-      auditLog('Award Achievement Certificate', 'Achievement', $user_id, null, json_encode(['certificate_number' => $cert_number]));
+      auditLog('Award Achievement Certificate', 'Achievement', $user_id, null, json_encode([
+        'certificate_number' => $cert_number,
+        'triggered_by_application' => $diamond_badge['application_id'],
+        'work_title' => $diamond_badge['work_title']
+      ]));
     }
     $cert_check->close();
   }
+  $diamond_check->close();
 }
 ?>

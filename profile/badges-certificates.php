@@ -11,7 +11,12 @@ $user_role = getUserRole();
 // Allow all users including clerk and director to view their profile
 
 // Get user info
-$stmt = $conn->prepare("SELECT full_name, email, department, contact_number, innovation_points, created_at FROM users WHERE id = ?");
+$stmt = $conn->prepare("
+  SELECT u.full_name, u.email, u.department, u.innovation_points, u.created_at, p.contact_number 
+  FROM users u 
+  LEFT JOIN user_profiles p ON u.id = p.user_id 
+  WHERE u.id = ?
+");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
@@ -728,13 +733,19 @@ if (in_array($user_role, ['clerk', 'director'])) {
         </div>
         <div style="padding: 20px; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); border-radius: 16px; text-align: center;">
           <div style="font-size: 48px; margin-bottom: 15px;">🏆</div>
-          <h3 style="color: #92400E; margin-bottom: 10px; font-size: 20px;">All Badges Accomplished!</h3>
-          <p style="color: #78350F; margin-bottom: 15px;">Congratulations! You have earned all available badges and received an Achievement Certificate.</p>
-          <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 15px;">
+          <h3 style="color: #92400E; margin-bottom: 10px; font-size: 20px;">Diamond Achievement Unlocked!</h3>
+          <p style="color: #78350F; margin-bottom: 15px;">Congratulations! Your IP work has reached Diamond tier (500+ views) and you have earned an Achievement Certificate!</p>
+          
+          <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 15px; margin-bottom: 15px;">
             <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Certificate Number</div>
             <div style="font-weight: 700; color: #92400E; font-size: 18px;"><?php echo htmlspecialchars($achievement_cert['certificate_number']); ?></div>
             <div style="font-size: 12px; color: #666; margin-top: 8px;">Issued: <?php echo date('F d, Y', strtotime($achievement_cert['issued_at'])); ?></div>
           </div>
+          
+          <a href="../certificate/view-achievement.php?id=<?php echo htmlspecialchars($achievement_cert['certificate_number']); ?>" 
+             style="display: inline-block; background: #92400E; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 4px 12px rgba(146, 64, 14, 0.3); transition: transform 0.2s;" target="_blank">
+            <i class="fas fa-eye" style="margin-right: 8px;"></i> View Full Certificate
+          </a>
         </div>
       </div>
       <?php endif; ?>

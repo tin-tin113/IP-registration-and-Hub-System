@@ -7,6 +7,18 @@ requireLogin();
 
 $user_role = getUserRole();
 $user_name = $_SESSION['full_name'];
+
+// Fetch badge thresholds
+$badge_thresholds = [];
+$threshold_stmt = $conn->prepare("SELECT badge_type, views_required FROM badge_thresholds ORDER BY views_required ASC");
+if ($threshold_stmt) {
+    $threshold_stmt->execute();
+    $threshold_result = $threshold_stmt->get_result();
+    while ($row = $threshold_result->fetch_assoc()) {
+        $badge_thresholds[] = $row;
+    }
+    $threshold_stmt->close();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -731,11 +743,18 @@ $user_name = $_SESSION['full_name'];
             <i class="fas fa-chevron-down"></i>
           </div>
           <div class="faq-answer">
-            <p>Badges are earned automatically when your approved IP works gain views in the IP Hub. Each application can earn different badges based on its IP type:</p>
+            <p>Badges are earned automatically when your approved IP works gain views in the IP Hub. The following badges are available:</p>
             <ul style="margin: 10px 0 10px 20px; line-height: 1.8;">
-              <li><strong>Copyright:</strong> Can earn Bronze (10+ views), Silver (50+), and Gold (100+) badges</li>
-              <li><strong>Patent:</strong> Can earn Bronze, Silver, Gold, and Platinum (250+ views) badges</li>
-              <li><strong>Trademark:</strong> Can earn all badges including Diamond (500+ views)</li>
+              <?php if (!empty($badge_thresholds)): ?>
+                <?php foreach ($badge_thresholds as $bt): ?>
+                  <li>
+                    <strong><?php echo htmlspecialchars($bt['badge_type']); ?>:</strong> 
+                    <?php echo intval($bt['views_required']); ?>+ views
+                  </li>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <li>Badges are currently being configured.</li>
+              <?php endif; ?>
             </ul>
             <p>Innovation points match badge thresholds automatically. When you earn all available badges, you'll receive an Achievement Certificate recognizing your excellence in IP contributions!</p>
           </div>
