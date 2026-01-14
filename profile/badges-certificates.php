@@ -11,12 +11,7 @@ $user_role = getUserRole();
 // Allow all users including clerk and director to view their profile
 
 // Get user info
-$stmt = $conn->prepare("
-  SELECT u.full_name, u.email, u.department, u.innovation_points, u.created_at, p.contact_number 
-  FROM users u 
-  LEFT JOIN user_profiles p ON u.id = p.user_id 
-  WHERE u.id = ?
-");
+$stmt = $conn->prepare("SELECT full_name, email, department, contact_number, innovation_points, created_at FROM users WHERE id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
@@ -53,6 +48,12 @@ $achievement_cert_stmt->bind_param("i", $user_id);
 $achievement_cert_stmt->execute();
 $achievement_cert = $achievement_cert_stmt->get_result()->fetch_assoc();
 $achievement_cert_stmt->close();
+
+// Get Diamond badge threshold
+$threshold_stmt = $conn->prepare("SELECT views_required FROM badge_thresholds WHERE badge_type = 'Diamond'");
+$threshold_stmt->execute();
+$diamond_threshold = $threshold_stmt->get_result()->fetch_assoc()['views_required'] ?? 500;
+$threshold_stmt->close();
 
 // Get user certificates
 $certs_result = $conn->query("
@@ -276,57 +277,148 @@ if (in_array($user_role, ['clerk', 'director'])) {
       color: #0A4D2E;
     }
     
-    /* Badges */
+    /* Modern Badges */
     .badges-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 20px;
     }
     
     .badge-card {
       text-align: center;
-      padding: 24px;
-      background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
-      border-radius: 16px;
-      border: 2px solid #BBF7D0;
-      transition: all 0.3s;
+      padding: 24px 20px;
+      border-radius: 20px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      background: white;
+      border: 1px solid rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
     }
     
     .badge-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 24px rgba(10, 77, 46, 0.15);
     }
     
-    .badge-icon {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 16px;
-      background: linear-gradient(135deg, #0A4D2E 0%, #1B7F4D 100%);
+    .badge-icon-wrapper {
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 36px;
-      color: #DAA520;
-      box-shadow: 0 8px 20px rgba(10, 77, 46, 0.3);
+      font-size: 32px;
+      margin-bottom: 16px;
+      position: relative;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    
+    /* Tier Styles */
+    /* Bronze */
+    .tier-bronze .badge-icon-wrapper {
+      background: linear-gradient(135deg, #E6A374 0%, #8B4513 100%);
+      color: #FFF0E6;
+      box-shadow: 0 8px 20px rgba(139, 69, 19, 0.3);
+    }
+    .tier-bronze:hover {
+      box-shadow: 0 12px 30px rgba(139, 69, 19, 0.15);
+      border-color: #E6A374;
+    }
+    
+    /* Silver */
+    .tier-silver .badge-icon-wrapper {
+      background: linear-gradient(135deg, #F5F7FA 0%, #BCC6CC 100%);
+      color: #718096;
+      box-shadow: 0 8px 20px rgba(188, 198, 204, 0.4);
+    }
+    .tier-silver:hover {
+      box-shadow: 0 12px 30px rgba(188, 198, 204, 0.25);
+      border-color: #BCC6CC;
+    }
+
+    /* Gold */
+    .tier-gold .badge-icon-wrapper {
+      background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%);
+      color: #FFF9C4;
+      box-shadow: 0 8px 20px rgba(212, 175, 55, 0.35);
+    }
+    .tier-gold:hover {
+      box-shadow: 0 12px 30px rgba(212, 175, 55, 0.2);
+      border-color: #FFD700;
+    }
+
+    /* Platinum */
+    .tier-platinum .badge-icon-wrapper {
+      background: linear-gradient(135deg, #E0F7FA 0%, #00BCD4 100%);
+      color: #FFFFFF;
+      box-shadow: 0 8px 20px rgba(0, 188, 212, 0.3);
+    }
+    .tier-platinum:hover {
+      box-shadow: 0 12px 30px rgba(0, 188, 212, 0.2);
+      border-color: #00BCD4;
+    }
+
+    /* Diamond */
+    .tier-diamond .badge-icon-wrapper {
+      background: linear-gradient(135deg, #B9F2FF 0%, #0077BE 100%);
+      color: #FFFFFF;
+      box-shadow: 0 8px 20px rgba(0, 119, 190, 0.35);
+      border: 2px solid #FFFFFF;
+    }
+    .tier-diamond {
+      background: linear-gradient(to bottom, #F0FDFF, #FFFFFF);
+      border: 1px solid #B9F2FF;
+    }
+    .tier-diamond:hover {
+      box-shadow: 0 12px 30px rgba(0, 119, 190, 0.25);
+      transform: translateY(-5px) scale(1.02);
     }
     
     .badge-name {
       font-size: 16px;
       font-weight: 700;
-      color: #0A4D2E;
-      margin-bottom: 8px;
+      color: #1E293B;
+      margin-bottom: 6px;
     }
     
     .badge-desc {
       font-size: 13px;
       color: #64748B;
-      margin-bottom: 12px;
+      margin-bottom: 4px;
+      line-height: 1.4;
     }
     
-    .badge-date {
-      font-size: 12px;
+    .badge-meta {
+      font-size: 11px;
       color: #94A3B8;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid #F1F5F9;
+      width: 100%;
+    }
+
+    .view-badge-btn {
+      margin-top: 12px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      width: 100%;
+      display: block;
+    }
+
+    .tier-bronze .view-badge-btn { background: #FFF0E6; color: #8B4513; }
+    .tier-silver .view-badge-btn { background: #F1F5F9; color: #475569; }
+    .tier-gold .view-badge-btn { background: #FFFBEB; color: #B45309; }
+    .tier-platinum .view-badge-btn { background: #E0F7FA; color: #006064; }
+    .tier-diamond .view-badge-btn { background: #E0F2FE; color: #0369A1; }
+
+    .view-badge-btn:hover {
+      filter: brightness(0.95);
     }
     
     /* Certificates */
@@ -428,6 +520,119 @@ if (in_array($user_role, ['clerk', 'director'])) {
       .cert-card {
         flex-direction: column;
         text-align: center;
+      }
+    }
+    
+    /* Modern Compact Achievement */
+    .achievement-card-compact {
+      background: linear-gradient(135deg, #FFFBEB 0%, #FFF7ED 100%);
+      border: 1px solid #FEF3C7;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .achievement-card-compact:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.2);
+      border-color: #FCD34D;
+    }
+
+    .achievement-card-compact::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 150px;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.05));
+      clip-path: polygon(20% 0, 100% 0, 100% 100%, 0% 100%);
+    }
+
+    .ach-icon-wrapper {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: white;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      flex-shrink: 0;
+    }
+
+    .ach-content {
+      flex: 1;
+    }
+
+    .ach-title {
+      color: #92400E;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ach-description {
+      color: #B45309;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .ach-action {
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .ach-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: white;
+      color: #B45309;
+      border: 1px solid #FCD34D;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      text-decoration: none;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(245, 158, 11, 0.05);
+    }
+
+    .ach-btn:hover {
+      background: #FFFBEB;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+      border-color: #F59E0B;
+    }
+
+    @media (max-width: 640px) {
+      .achievement-card-compact {
+        flex-direction: column;
+        text-align: center;
+        padding: 24px;
+      }
+      .ach-action {
+        margin-left: 0;
+        margin-top: 16px;
+        width: 100%;
+      }
+      .ach-btn {
+        justify-content: center;
+        width: 100%;
+      }
+      .ach-title {
+        justify-content: center;
       }
     }
   </style>
@@ -701,21 +906,40 @@ if (in_array($user_role, ['clerk', 'director'])) {
           </div>
         <?php else: ?>
           <div class="badges-grid">
-            <?php foreach ($badges as $badge): ?>
-              <div class="badge-card">
-                <div class="badge-icon">
-                  <i class="fas fa-award"></i>
+            <?php foreach ($badges as $badge): 
+              $tierClass = 'tier-' . strtolower($badge['badge_type']);
+              $icon = match($badge['badge_type']) {
+                'Bronze' => 'fa-shield-alt',
+                'Silver' => 'fa-shield-alt',
+                'Gold' => 'fa-crown',
+                'Platinum' => 'fa-gem',
+                'Diamond' => 'fa-gem',
+                default => 'fa-medal'
+              };
+            ?>
+              <div class="badge-card <?php echo $tierClass; ?>">
+                <div class="badge-icon-wrapper">
+                  <i class="fas <?php echo $icon; ?>"></i>
                 </div>
-                <div class="badge-name"><?php echo htmlspecialchars($badge['badge_type']); ?> Badge</div>
+                <div class="badge-name"><?php echo htmlspecialchars($badge['badge_type']); ?></div>
+                
                 <?php if (!empty($badge['work_title'])): ?>
-                  <div class="badge-desc" style="font-weight: 600; margin-bottom: 5px;">For: <?php echo htmlspecialchars($badge['work_title']); ?></div>
-                  <div class="badge-desc" style="font-size: 11px; color: #64748B;"><?php echo htmlspecialchars($badge['work_ip_type'] ?? $badge['ip_type'] ?? 'IP Work'); ?> • <?php echo $badge['views_required']; ?>+ views</div>
+                  <div class="badge-desc" style="font-weight: 600;">
+                    <?php echo htmlspecialchars(substr($badge['work_title'], 0, 40)) . (strlen($badge['work_title']) > 40 ? '...' : ''); ?>
+                  </div>
+                  <div class="badge-desc" style="font-size: 11px;">
+                    <?php echo $badge['views_required']; ?>+ views
+                  </div>
                 <?php else: ?>
                   <div class="badge-desc"><?php echo $badge['views_required']; ?>+ views milestone</div>
                 <?php endif; ?>
-                <div class="badge-date">Earned <?php echo date('M d, Y', strtotime($badge['awarded_at'])); ?></div>
-                <a href="../app/view-badge.php?id=<?php echo $badge['id']; ?>" class="cert-btn" style="margin-top: 12px; display: block; text-align: center;" target="_blank">
-                  <i class="fas fa-eye"></i> View Badge
+                
+                <div class="badge-meta">
+                  Earned <?php echo date('M d, Y', strtotime($badge['awarded_at'])); ?>
+                </div>
+                
+                <a href="../app/view-badge.php?id=<?php echo $badge['id']; ?>" class="view-badge-btn" target="_blank">
+                  View Badge
                 </a>
               </div>
             <?php endforeach; ?>
@@ -729,23 +953,29 @@ if (in_array($user_role, ['clerk', 'director'])) {
       <div class="section">
         <div class="section-header">
           <i class="fas fa-trophy" style="font-size: 24px; color: #FFD700;"></i>
-          <h2 class="section-title">Achievement Certificate</h2>
+          <h2 class="section-title">Major Achievement</h2>
         </div>
-        <div style="padding: 20px; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); border-radius: 16px; text-align: center;">
-          <div style="font-size: 48px; margin-bottom: 15px;">🏆</div>
-          <h3 style="color: #92400E; margin-bottom: 10px; font-size: 20px;">Diamond Achievement Unlocked!</h3>
-          <p style="color: #78350F; margin-bottom: 15px;">Congratulations! Your IP work has reached Diamond tier (500+ views) and you have earned an Achievement Certificate!</p>
-          
-          <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 15px; margin-bottom: 15px;">
-            <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Certificate Number</div>
-            <div style="font-weight: 700; color: #92400E; font-size: 18px;"><?php echo htmlspecialchars($achievement_cert['certificate_number']); ?></div>
-            <div style="font-size: 12px; color: #666; margin-top: 8px;">Issued: <?php echo date('F d, Y', strtotime($achievement_cert['issued_at'])); ?></div>
+        
+        <div class="achievement-card-compact">
+          <div class="ach-icon-wrapper">
+            <i class="fas fa-crown"></i>
           </div>
           
-          <a href="../certificate/view-achievement.php?id=<?php echo htmlspecialchars($achievement_cert['certificate_number']); ?>" 
-             style="display: inline-block; background: #92400E; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 4px 12px rgba(146, 64, 14, 0.3); transition: transform 0.2s;" target="_blank">
-            <i class="fas fa-eye" style="margin-right: 8px;"></i> View Full Certificate
-          </a>
+          <div class="ach-content">
+            <div class="ach-title">
+              Diamond Achievement Unlocked
+            </div>
+            <p class="ach-description">
+              Congratulations! You've reached the <strong>Diamond tier</strong> (<?php echo $diamond_threshold; ?>+ views) on your IP work. 
+              Certificate #<span style="font-family: monospace; font-weight: 700;"><?php echo htmlspecialchars($achievement_cert['certificate_number']); ?></span>
+            </p>
+          </div>
+          
+          <div class="ach-action">
+            <a href="../certificate/view-achievement.php?id=<?php echo htmlspecialchars($achievement_cert['certificate_number']); ?>" target="_blank" class="ach-btn">
+              <i class="fas fa-eye"></i> View Certificate
+            </a>
+          </div>
         </div>
       </div>
       <?php endif; ?>

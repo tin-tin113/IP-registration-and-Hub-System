@@ -76,6 +76,53 @@ $works_result = $works_stmt->get_result();
 $works_data = $works_result->fetch_assoc();
 $approved_works = intval($works_data['count'] ?? 0);
 $works_stmt->close();
+
+// Define badge color schemes
+$badge_colors = [
+    'Bronze' => [
+        'main' => '#CD7F32',
+        'gradient_start' => '#CD7F32',
+        'gradient_mid' => '#B87333',
+        'gradient_end' => '#A0522D',
+        'glow' => 'rgba(205, 127, 50, 0.6)',
+        'text' => '#8B4513'
+    ],
+    'Silver' => [
+        'main' => '#C0C0C0',
+        'gradient_start' => '#E0E0E0',
+        'gradient_mid' => '#C0C0C0',
+        'gradient_end' => '#A0A0A0',
+        'glow' => 'rgba(192, 192, 192, 0.6)',
+        'text' => '#696969'
+    ],
+    'Gold' => [
+        'main' => '#FFD700',
+        'gradient_start' => '#FFD700',
+        'gradient_mid' => '#DAA520',
+        'gradient_end' => '#B8860B',
+        'glow' => 'rgba(218, 165, 32, 0.6)',
+        'text' => '#B8860B'
+    ],
+    'Platinum' => [
+        'main' => '#E5E4E2',
+        'gradient_start' => '#F5F5F5',
+        'gradient_mid' => '#E5E4E2',
+        'gradient_end' => '#D1D1D1',
+        'glow' => 'rgba(229, 228, 226, 0.6)',
+        'text' => '#505050'
+    ],
+    'Diamond' => [
+        'main' => '#B9F2FF',
+        'gradient_start' => '#E0FFFF',
+        'gradient_mid' => '#B9F2FF',
+        'gradient_end' => '#00CED1',
+        'glow' => 'rgba(185, 242, 255, 0.6)',
+        'text' => '#008B8B'
+    ]
+];
+
+// Fallback to Gold if type unknown
+$current_color = $badge_colors[$badge['badge_type']] ?? $badge_colors['Gold'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -111,8 +158,8 @@ $works_stmt->close();
       left: -50%;
       width: 200%;
       height: 200%;
-      background: radial-gradient(circle at 20% 80%, rgba(218, 165, 32, 0.15) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+      background: radial-gradient(circle at 20% 80%, <?php echo $current_color['glow']; ?> 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, <?php echo $current_color['glow']; ?> 0%, transparent 50%),
                   radial-gradient(circle at 50% 50%, rgba(27, 127, 77, 0.2) 0%, transparent 70%);
       animation: backgroundPulse 15s ease-in-out infinite;
       z-index: -1;
@@ -170,7 +217,7 @@ $works_stmt->close();
       transform: translate(-50%, -50%);
       width: 160px;
       height: 160px;
-      background: radial-gradient(circle, rgba(218, 165, 32, 0.6) 0%, transparent 70%);
+      background: radial-gradient(circle, <?php echo $current_color['glow']; ?> 0%, transparent 70%);
       border-radius: 50%;
       animation: iconGlow 3s ease-in-out infinite;
     }
@@ -185,14 +232,14 @@ $works_stmt->close();
       width: 130px;
       height: 130px;
       margin: 0 auto;
-      background: linear-gradient(145deg, #FFD700 0%, #DAA520 50%, #B8860B 100%);
+      background: linear-gradient(145deg, <?php echo $current_color['gradient_start']; ?> 0%, <?php echo $current_color['gradient_mid']; ?> 50%, <?php echo $current_color['gradient_end']; ?> 100%);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 56px;
       color: #0A4D2E;
-      box-shadow: 0 15px 40px rgba(218, 165, 32, 0.5),
+      box-shadow: 0 15px 40px <?php echo $current_color['glow']; ?>,
                   inset 0 -4px 10px rgba(0, 0, 0, 0.2),
                   inset 0 4px 10px rgba(255, 255, 255, 0.4);
       border: 4px solid rgba(255, 255, 255, 0.3);
@@ -212,6 +259,7 @@ $works_stmt->close();
       letter-spacing: 3px;
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
       position: relative;
+      color: <?php echo $current_color['gradient_start']; ?>;
     }
     
     .badge-subtitle {
@@ -242,17 +290,14 @@ $works_stmt->close();
       transform: translateX(-50%);
       width: 60px;
       height: 3px;
-      background: linear-gradient(90deg, #DAA520, #FFD700, #DAA520);
+      background: linear-gradient(90deg, <?php echo $current_color['gradient_mid']; ?>, <?php echo $current_color['gradient_start']; ?>, <?php echo $current_color['gradient_mid']; ?>);
       border-radius: 2px;
     }
     
     .recipient-name {
       font-size: 28px;
       font-weight: 700;
-      background: linear-gradient(135deg, #0A4D2E 0%, #1B7F4D 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #0A4D2E;
       margin-bottom: 8px;
     }
     
@@ -431,16 +476,16 @@ $works_stmt->close();
     }
     
     .btn-copy {
-      background: linear-gradient(135deg, #DAA520 0%, #B8860B 100%);
+      background: linear-gradient(135deg, <?php echo $current_color['gradient_mid']; ?> 0%, <?php echo $current_color['text']; ?> 100%);
       color: white;
       padding: 14px 20px;
       font-size: 13px;
-      box-shadow: 0 4px 15px rgba(218, 165, 32, 0.3);
+      box-shadow: 0 4px 15px <?php echo $current_color['glow']; ?>;
     }
     
     .btn-copy:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(218, 165, 32, 0.4);
+      box-shadow: 0 8px 25px <?php echo $current_color['glow']; ?>;
     }
     
     /* Toast notification */
@@ -514,7 +559,7 @@ $works_stmt->close();
       <div class="badge-icon-wrapper">
         <div class="badge-icon-glow"></div>
         <div class="badge-icon-large">
-          <i class="fas fa-award"></i>
+          <i class="fas fa-award" style="color: #0A4D2E;"></i>
         </div>
       </div>
       <div class="badge-type"><?php echo htmlspecialchars($badge['badge_type']); ?> Badge</div>
@@ -555,20 +600,23 @@ $works_stmt->close();
         </div>
       </div>
       
-      <div class="achievement-text">
-        <p>
-          <strong><?php echo htmlspecialchars($badge['full_name']); ?></strong> has earned the 
-          <strong><?php echo htmlspecialchars($badge['badge_type']); ?> Badge</strong> for achieving 
-          <strong><?php echo $badge['views_required']; ?>+ views</strong> on their approved intellectual property works.
-        </p>
-        <?php if ($threshold): ?>
-          <p style="font-size: 13px; color: #64748B; margin-top: 12px;">
-            <i class="fas fa-trophy" style="color: #DAA520; margin-right: 6px;"></i>
-            This badge recognizes outstanding contribution to the CHMSU IP community and awards 
-            <strong style="color: #0A4D2E;"><?php echo $threshold['points_awarded']; ?> innovation points</strong>.
-          </p>
-        <?php endif; ?>
+      <div class="unlocked-message">
+        <div class="unlocked-header">
+          <i class="fas fa-lock-open"></i>
+          <?php echo htmlspecialchars($badge['badge_type']); ?> Achievement Unlocked!
+        </div>
+        <div class="unlocked-body">
+          Congratulations! Your IP work has reached <span style="color: <?php echo $current_color['text']; ?>; font-weight: 700;"><?php echo htmlspecialchars($badge['badge_type']); ?> tier</span> (<?php echo $badge['views_required']; ?>+ views) and you have earned an Achievement Certificate!
+        </div>
       </div>
+      
+      <?php if ($threshold): ?>
+        <div class="achievement-text" style="font-size: 13px; color: #64748B;">
+          <i class="fas fa-trophy" style="color: <?php echo $current_color['text']; ?>; margin-right: 6px;"></i>
+          This badge acknowledges outstanding contribution to the CHMSU IP community and awards 
+          <strong style="color: #0A4D2E;"><?php echo $threshold['points_awarded']; ?> innovation points</strong>.
+        </div>
+      <?php endif; ?>
       
       <div class="share-section">
         <h3><i class="fas fa-share-alt"></i> Share This Achievement</h3>
